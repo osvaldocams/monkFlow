@@ -1,0 +1,53 @@
+# -------------------------
+# Dependencias Globales y Locales
+# -------------------------
+node_modules/
+.pnpm-debug.log*
+
+# -------------------------
+# Builds (Resultado de la compilación)
+# -------------------------
+dist/
+build/
+.next/
+out/
+
+# -------------------------
+# Variables de Entorno
+# -------------------------
+.env
+.env.local
+.env.*.local
+
+# -------------------------
+# Directorios de Configuración Personal & Editores
+# -------------------------
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# -------------------------
+# Archivos de Logs, Caché y Temporales
+# -------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
+
+# -------------------------
+# Prisma (Específico para el Backend)
+# -------------------------
+*.db
+*.db-journal
+
+# -------------------------
+# Herramientas de Desarrollo (REST Clients)
+# -------------------------
+*.http
+backend/*.http
