@@ -172,9 +172,7 @@ git push -u origin main
 *   **Timestamp:** 21/05/2026 — Bloque matutino de infraestructura.
 
 #### 📝 Crónica de la Sesión & Decisiones Técnicas
-Se estructuró el monorepositorio controlando qué archivos se sincronizan con la nube. Diseñé un archivo `.gitignore` estricto en la raíz para aislar los entornos locales (`node_modules`), las variables de entorno críticas (`.env`) y la configuración personal del editor (`.vscode`), protegiendo la seguridad del proyecto desde el día uno.
-
-Se renombró la rama por defecto a `main` para alinearse con los estándares modernos de la industria y evitar conflictos de sincronización con el servidor remoto.
+Se realizaron las instalaciones de express y los types de express, se montó el server en el puerto 3000. adicional se configuro un ruter modular, en este caso un router para el CRUD Account que es lo primero que trabajaremos.
 
 **Steps & Commands:**
 1. Realizamos la instalación de express y de sus types
