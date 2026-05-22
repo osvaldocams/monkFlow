@@ -12,6 +12,7 @@ Configurar el entorno base del backend con TypeScript moderno (ESM), estructurar
 ---
 
 ### 🛠️ Sub-parte 1: Node.js & TypeScript Setup
+<details>
 
 *   **Status:** ✅ Completed
 *   **Timestamp:** 19/05/2026 — Bloque matutino de infraestructura.
@@ -65,9 +66,12 @@ La meta principal del entorno fue establecer **ESM (ECMAScript Modules)** nativo
 ```bash
 pnpm add -D @types/node
 ```
+</details>
+
 ---
 
 ### 🛠️ Sub-parte 2: git & github Setup
+<details>
 
 *   **Status:** ✅ Completed
 *   **Timestamp:** 20/05/2026 — Bloque matutino de infraestructura.
@@ -158,3 +162,90 @@ git push -u origin main
 - [ ] iniciar la sesion echando vistazos al notion handbook
 - [ ] hacer el PR y merge de esta rama
 - [ ] preparar la siguiente sesion, que es inicio de phase
+</details>
+
+---
+### 🛠️ Sub-parte 3: Express server
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 21/05/2026 — Bloque matutino de infraestructura.
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+Se estructuró el monorepositorio controlando qué archivos se sincronizan con la nube. Diseñé un archivo `.gitignore` estricto en la raíz para aislar los entornos locales (`node_modules`), las variables de entorno críticas (`.env`) y la configuración personal del editor (`.vscode`), protegiendo la seguridad del proyecto desde el día uno.
+
+Se renombró la rama por defecto a `main` para alinearse con los estándares modernos de la industria y evitar conflictos de sincronización con el servidor remoto.
+
+**Steps & Commands:**
+1. Realizamos la instalación de express y de sus types
+  ```bash
+    pnpm add express
+    pnpm add -D @types/express
+  ```
+2. en el archivo `backend/src/server.ts` importamos express y hacemos su instancia, exportamos default
+  ```typescript
+  import express from "express"
+
+  const server = express()
+
+  export default server
+  ```
+3. vamos al archivo `backend/src/index.ts` para levantar el server, importamos la instancia de express y usamos el metodo listen.
+  ```typescript
+  import server from "./server.js"
+
+  server.listen(3000, () => {
+      console.log("Server is running on port 3000")
+  })
+  ```
+4. volvemos a `server.ts` y creamos un pequeño routing a manera de test
+  ```typescript
+  import express from "express"
+
+  const server = express()
+
+  //routing
+  server.get("/", (req, res) => { //⬅️​test
+      res.send("Hello World")
+  })
+
+  export default server
+  ```
+5. creamos una carpeta para los routers y nuestro primer archivo `src/routes/accountRoutes.ts` importamos `Router` de express y creamos una instancia que exportamos default, traemos a este archivo el test que teniamos en server.
+  ```typescript
+  import { Router } from "express"
+
+  const router = Router()
+
+  //routing
+  router.get("/", (req, res)=>{ 
+      res.send("Hello World")
+  })
+
+  export default router
+  ```
+6. conectamos con el server, para ello volvemos a `server.ts` importamos la instancia de Router, ya podemos borrar el test que teniamos anteriormente, lo ejecutamos despues de la instancia de express usando el metodo use, dandole la ruta correcta en este caso `/api/account`, finalmente antes del router y despues de express habilitamos la lectura json.
+```typescript
+  import express from "express"
+  import router from "./routes/accountRoutes.js"
+
+  const server = express()
+
+  server.use(express.json()) //⬅️lectura json habilitada
+
+  //routing
+  server.use("/api/account", router) //⬅️nuestro router​
+
+
+  export default server
+```
+7. en /backend creamos el archivo `requests.http` el cual ya tenemos ignorado en el gitignore y nos sirve para hacer pruebas usando la vscode extention `rest client` hacemos el test con el metodo get que tenemos en nuestro router y revisamos que la salida sea "hello world"
+```
+### ACCOUNTS
+### GET ACCOUNTS
+
+GET http://localhost:3000/api/accounts
+
+***send Request => Hello world
+```
+</details>

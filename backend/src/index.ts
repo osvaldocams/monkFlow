@@ -1,3 +1,5 @@
-import {test} from "./server.js"
+import server from "./server.js"
 
-test()
+server.listen(3000, () => {
+    console.log("Server is running on port 3000")
+})
