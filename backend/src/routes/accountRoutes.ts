@@ -1,10 +1,9 @@
 import { Router } from "express"
+import { AccountControllers } from "../controllers/AccountControllers.js"
 
 const router = Router()
 
 //routing
-router.get("/", (req, res)=>{ 
-    res.send("Hello World")
-})
+router.get("/", AccountControllers.testConnection)
 
 export default router
