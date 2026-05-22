@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Definición del Enum nativo en Postgres
+enum AccountKind {
+  CASH
+  BANK
+}
+
+// 2. Definición del Modelo Account
+model Account {
+  id        String      @id @default(uuid())
+  name      String      
+  kind      AccountKind
+  balance   Float       @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@map("accounts") // Esto renombra la tabla en la base de datos a minúsculas, una buena práctica en Postgres
+}
