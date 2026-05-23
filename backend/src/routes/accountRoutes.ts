@@ -49,4 +49,11 @@ router.patch("/:id",
     AccountControllers.updateAccount
 )
 
+// DELETE ACCOUNT
+router.delete("/:id",
+        param("id").isUUID().withMessage("The account ID must be a valid UUID"),
+        handleInputErrors,
+        AccountControllers.deleteAccount
+)
+
 export default router

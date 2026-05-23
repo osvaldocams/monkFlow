@@ -274,3 +274,82 @@ En esta sesión se creará el endpoint para actualización de account, se tomó 
     }
     ```
 </details>
+
+---
+
+### 🛠️ Sub-parte 5: DELETE delete account
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 23/05/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+🚨​IMPORTANTE
+En esta sesión crearemos un enpoint provisional para DELETE la idea es completar el crud y a medida que avance el proyecto y tengamos modelos relacionados modificaremos este endpoint transformandolo en un soft delete que proteja la integridad de los datos 
+
+**Steps & Commands:**
+
+1. empezamos en el archivo router, no requiere mayores validaciones mas que la de su param("id") 
+    ```typescript
+    router.delete("/:id",
+        param("id").isUUID().withMessage("The account ID must be a valid UUID"),
+        handleInputErrors,
+        AccountControllers.deleteAccount
+    )
+    ```
+2. creamos el controller en este caso usamos en el catch una validación con Error2025 que es codigo de prisma que nos permite reconocer un registro no encontrado
+    ```typescript
+    static deleteAccount = async (req: Request<{ id: string }>, res: Response) => {
+        try {
+            const { id } = req.params;
+
+            await prisma.account.delete({
+                where: {id}
+            });
+
+            res.json({ message: "Account deleted successfully" });
+        } catch (error) {
+            console.error(error)
+            // Error P2025 es el código de Prisma para "Registro no encontrado"
+            if(error instanceof Prisma.PrismaClientKnownRequestError){
+                if (error.code === 'P2025') {
+                    return res.status(404).json({ error: "Account not found" });
+                }
+            }
+            res.status(500).json({ error: "Error deleting account" });
+        }
+    }
+    ```
+3. refactor a PATCH controller updateAccount, utilizamos el mismo codigo para "registro no encontrado" en el catch
+    ```typescript
+    static updateAccount = async (req: Request<{ id: string }>, res: Response) => {
+        try {
+            const { id } = req.params
+            const { name } = req.body 
+
+            // Actualización quirúrgica en Neon
+            const updatedAccount = await prisma.account.update({
+                where: { id },
+                data: { name }
+            })
+
+            res.status(200).json(updatedAccount)
+        } catch (error) {
+            console.error(error)
+            // Error P2025 es el código de Prisma para "Registro no encontrado"
+            if(error instanceof Prisma.PrismaClientKnownRequestError){
+                if (error.code === 'P2025') {
+                    return res.status(404).json({ error: "Account not found" });
+                }
+            }
+            res.status(500).json({ error: "Error updating account" })
+        }
+    }
+    ```
+4. relizamos una prueba en rest client para eliminar una cuenta
+    ```
+    ### DELETE ACCOUNT
+    DELETE http://localhost:3000/api/accounts/5d985b1f-b580-454f-a920-097d245d6f95
+    ```
+</details>
