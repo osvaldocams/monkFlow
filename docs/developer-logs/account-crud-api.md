@@ -210,3 +210,67 @@ El objetivo es crear las rutas para los endpoint GET y GET by id y los controlad
     GET http://localhost:3000/api/accounts/5d985b1f-b580-454f-a920-097d245d6f95
     ```
 </details>
+
+---
+
+### 🛠️ Sub-parte 4: PATCH update account
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 23/05/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+En esta sesión se creará el endpoint para actualización de account, se tomó la desición de que solo el campo "name" permitirá ser modificado, para proteger la lógica de negocios y la integridad de los datos "balance" y "kind" no se permitirá la modificación 
+
+**Steps & Commands:**
+
+1. empezamos en el archivo router el campo requiere identificación por lo que lleva el id en la ruta, validamos el param("id") y el body("name")
+    ```typescript
+    router.patch("/:id",
+    param("id")
+        .isUUID().withMessage("The account ID must be a valid UUID"),
+    body('name')
+        .notEmpty().withMessage('Account name is required')
+        .isString().withMessage('Account name must be a string'),
+    handleInputErrors,
+    AccountControllers.updateAccount
+    )
+    ```
+2. escribimos el controlador, es importante hacer una validación de que la cuenta existe
+    ```typescript
+    static updateAccount = async (req: Request<{ id: string }>, res: Response) => {
+        try {
+            const { id } = req.params
+            const { name } = req.body // 👈 Restricción absoluta: solo extraemos el name
+
+            // Fail-Fast: Validar existencia
+            const accountExists = await prisma.account.findUnique({ where: { id } })
+            if (!accountExists) {
+                return res.status(404).json({ error: "Account not found" })
+            }
+
+            // Actualización quirúrgica en Neon
+            const updatedAccount = await prisma.account.update({
+                where: { id },
+                data: { name } // 👈 Solo muta el nombre de la cuenta
+            })
+
+            res.status(200).json(updatedAccount)
+        } catch (error) {
+            console.error(error)
+            res.status(500).json({ error: "Error updating account" })
+        }
+    }
+    ```
+3. realizamos una prueba en rest client
+    ```
+    ### PATCH UPDATE ACCOUNTS
+    PATCH http://localhost:3000/api/accounts/5d985b1f-b580-454f-a920-097d245d6f95
+    Content-Type: application/json
+
+    {
+        "name": "Test Account"
+    }
+    ```
+</details>

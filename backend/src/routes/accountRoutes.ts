@@ -36,6 +36,17 @@ router.get("/:id",
         .isUUID().withMessage("the account ID must be a valid UUID"),
     handleInputErrors,
     AccountControllers.getAccountById
-)   
+)
+
+// UPDATE ACCOUNT
+router.patch("/:id",
+    param("id")
+        .isUUID().withMessage("The account ID must be a valid UUID"),
+    body('name')
+        .notEmpty().withMessage('Account name is required')
+        .isString().withMessage('Account name must be a string'),
+    handleInputErrors,
+    AccountControllers.updateAccount
+)
 
 export default router

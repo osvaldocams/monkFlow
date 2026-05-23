@@ -47,4 +47,27 @@ export class AccountControllers {
             res.status(500).json({ error: "Error fetching account" })
         }
     }
+    static updateAccount = async (req: Request<{ id: string }>, res: Response) => {
+        try {
+            const { id } = req.params
+            const { name } = req.body // 👈 Restricción absoluta: solo extraemos el name
+
+            // Fail-Fast: Validar existencia
+            const accountExists = await prisma.account.findUnique({ where: { id } })
+            if (!accountExists) {
+                return res.status(404).json({ error: "Account not found" })
+            }
+
+            // Actualización quirúrgica en Neon
+            const updatedAccount = await prisma.account.update({
+                where: { id },
+                data: { name } // 👈 Solo muta el nombre de la cuenta
+            })
+
+            res.status(200).json(updatedAccount)
+        } catch (error) {
+            console.error(error)
+            res.status(500).json({ error: "Error updating account" })
+        }
+    }
 }
