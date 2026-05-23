@@ -19,4 +19,32 @@ export class AccountControllers {
             res.status(500).json({ error: "Error creating account" })
         }
     }
+    static getAllAccounts = async (req: Request, res: Response) => {
+        try {
+            const accounts = await prisma.account.findMany()
+            res.status(200).json(accounts)
+        } catch (error) {
+            console.error(error)
+            res.status(500).json({ error: "Error fetching accounts" })
+        }
+    }
+    static getAccountById = async (req: Request<{ id: string }>, res: Response) => {
+        try {
+            const { id } = req.params
+
+            const account = await prisma.account.findUnique({
+                where: { id }
+            })
+
+            // Si la cuenta no existe en Neon, rompemos el ciclo con un 404
+            if (!account) {
+                return res.status(404).json({ error: "Account not found" })
+            }
+
+            res.status(200).json(account)
+        } catch (error) {
+            console.error(error)
+            res.status(500).json({ error: "Error fetching account" })
+        }
+    }
 }

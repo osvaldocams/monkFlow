@@ -139,3 +139,74 @@ El objetivo es crear un router valido usando express validator, validar los inpu
     }
     ```
 </details>
+
+---
+
+### 🛠️ Sub-parte 3: GET & GET by Id account
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 22/05/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+El objetivo es crear las rutas para los endpoint GET y GET by id y los controladores que nos permitan hacer las consultas.
+
+**Steps & Commands:**
+
+1. empezamos en el archivo router para GET all no es necesario validar pues no tenemos inputs
+    ```typescript
+    router.get("/", AccountControllers.getAllAccounts)
+    ```
+2. creamos el controller usando el metodo findMany(), y hacemos el test en rest client
+    ```typescript
+    static GetAllAccounts = async (req: Request, res: Response) => {
+        try {
+            const accounts = await prisma.account.findMany()
+            res.status(200).json(accounts)
+        } catch (error) {
+            console.error(error)
+            res.status(500).json({ error: "Error fetching accounts" })
+        }
+    }
+    ```
+    ```
+    ### GET ACCOUNTS
+    GET http://localhost:3000/api/accounts
+    ```
+3. ahora creamos el get para get by id en este caso necesitamos que el id esté contenido en la ruta, lo vamos a validar con `param` que nos da express-validator 
+    ```typescript
+    router.get("/:id",
+    param("id")
+        .isUUID().withMessage("the account ID must be a valid UUID"),
+    handleInputErrors,
+    AccountControllers.getAccountById
+    )
+    ```
+4. Creamos el controller usaremos `findUnique` y una pequeña validación que comprueba que la cuenta exista, y probamos haciendo la consulta en rest client
+    ```typescript
+    static getAccountById = async (req: Request<{ id: string }>, res: Response) => {
+        try {
+            const { id } = req.params
+
+            const account = await prisma.account.findUnique({
+                where: { id }
+            })
+
+            // Si la cuenta no existe en Neon, rompemos el ciclo con un 404
+            if (!account) {
+                return res.status(404).json({ error: "Account not found" })
+            }
+
+            res.status(200).json(account)
+        } catch (error) {
+            console.error(error)
+            res.status(500).json({ error: "Error fetching account" })
+        }
+    }
+    ```
+    ```
+    ### GET ACCOUNT BY ID
+    GET http://localhost:3000/api/accounts/5d985b1f-b580-454f-a920-097d245d6f95
+    ```
+</details>

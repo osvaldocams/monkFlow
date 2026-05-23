@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { body } from "express-validator"
+import { body, param } from "express-validator"
 import { AccountControllers } from "../controllers/AccountControllers.js"
 import { handleInputErrors } from "../middleware/index.js"
 
@@ -26,5 +26,16 @@ router.post("/",
     handleInputErrors,
     AccountControllers.createAccount
 )
+
+// GET ALL ACCOUNTS
+router.get("/", AccountControllers.getAllAccounts)
+
+// GET ACCOUNT BY ID
+router.get("/:id",
+    param("id")
+        .isUUID().withMessage("the account ID must be a valid UUID"),
+    handleInputErrors,
+    AccountControllers.getAccountById
+)   
 
 export default router
