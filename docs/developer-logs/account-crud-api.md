@@ -47,3 +47,95 @@ El objetivo de esta sesión es poder realizar un test de comunicación entre el 
 
 ---
 
+### 🛠️ Sub-parte 2: POST account
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 22/05/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+El objetivo es crear un router valido usando express validator, validar los inputs creando un middleware `handleInputErrors` y un controller que realice la creación de la cuenta, al final haremos una prueba con rest client y nos aseguramos que funcione correctamente
+
+**Steps & Commands:**
+
+1. el primer paso lo haremos en el router validando los inputs de nuestro POST, lo haremos con `express validator`
+    ```bash
+    cd backend
+    pnpm add express-validator
+    ```
+2. ya podemos hacer validaciones, vamos al router, para definirlas en nuestro endpoint POST
+    ```typescript
+    //POST ACCOUNT
+    router.post("/", 
+        body('name')
+            .notEmpty()
+            .withMessage('account name is required')
+            .isString()
+            .withMessage('account name must be a string'),
+        body('kind')
+            .notEmpty()
+            .withMessage('account kind is required')
+            .isIn(['CASH', 'BANK'])
+            .withMessage('account kind must be one of the following values: CASH, BANK'),
+        body('balance')
+            .optional()
+            .isNumeric()
+            .withMessage('account balance must be a number')
+            .custom((value) => value >= 0)
+            .withMessage('account balance must be a non-negative number'),
+        handleInputErrors,
+        AccountControllers.createAccount
+    )
+    ```
+3. creamos una funcion middleware para manejar los errores de input
+    ```typescript
+    import { Request, Response, NextFunction } from "express";
+    import { validationResult } from "express-validator";
+
+    export const handleInputErrors = (req: Request, res: Response, next: NextFunction) => {
+        const errors = validationResult(req)
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() })
+        }
+        next()
+    }
+    ```
+4. finalmente creamos el contenido del controller `createAccount` que es lo que escribe en nuestra DB
+    ```typescript
+    import { Request, Response } from 'express'
+    import prisma from '../config/db.js'
+    import { AccountKind } from '@prisma/client'; // 👈 importamos el type enum de kind
+
+    export class AccountControllers {
+        static createAccount = async (req: Request, res: Response) => {
+            try { 
+                const { name, kind, balance } = req.body;
+                const newAccount = await prisma.account.create({
+                    data: {
+                        name,
+                        kind: kind as AccountKind, // 👈 Le aseguramos a TS que es el Enum correcto
+                        balance: balance ? Number(balance) : 0 // 👈 Nos aseguramos de que sea un número flotante puro
+                    }
+                })
+                res.status(201).json(newAccount)
+            } catch (error) {
+                console.error(error);
+                res.status(500).json({ error: "Error creating account" })
+            }
+        }
+    }
+    ```
+5. creamos una prueba creando un par de cuentas con rest client y revisamos en Neon/tables o prisma studio que se haya creado
+    ```
+    ### POST ACCOUNTS
+    POST http://localhost:3000/api/accounts
+    Content-Type: application/json
+
+    {
+        "name": "Test Account",
+        "kind": "BANK",
+        "balance": 1000
+    }
+    ```
+</details>
