@@ -7,13 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 1. Definición del Enum nativo en Postgres
+// ==========================================
+// ACCOUNT MODULE
+// ==========================================
+// Definicines del Enum nativo en Postgres
 enum AccountKind {
   CASH
   BANK
 }
 
-// 2. Definición del Modelo Account
+// Definición del Modelo Account
 model Account {
   id        String      @id @default(uuid())
   name      String      
@@ -22,5 +25,42 @@ model Account {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
+  // 👈 LAS REFERENCIAS OPUESTAS OBLIGATORIAS:
+  incomeMovements  Movement[]   @relation("MoneyInsertion")
+  expenseMovements Movement[]   @relation("MoneyExtraction")
+
   @@map("accounts") // Esto renombra la tabla en la base de datos a minúsculas, una buena práctica en Postgres
 }
+
+// ==========================================
+// MOVEMENT MODULE
+// ==========================================
+enum MovementType {
+  INCOME
+  EXPENSE
+  TRANSFER
+  DEPOSIT
+  WITHDRAWAL
+}
+
+model Movement {
+  id               String       @id @default(uuid())
+  type             MovementType
+  amount           Decimal      @db.Decimal(12, 2)
+  description      String
+  date             DateTime     @default(now())
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  // Cuenta que RECIBE el dinero (+ balance)
+  // Requerido en: INCOME, TRANSFER, DEPOSIT
+  incomeAccountId  String?
+  incomeAccount    Account?     @relation("MoneyInsertion", fields: [incomeAccountId], references: [id], onDelete: Restrict)
+
+  // Cuenta de donde SALE el dinero (- balance)
+  // Requerido en: EXPENSE, TRANSFER, WITHDRAWAL
+  expenseAccountId String?
+  expenseAccount   Account?     @relation("MoneyExtraction", fields: [expenseAccountId], references: [id], onDelete: Restrict)
+  @@map("movements")
+}
+
