@@ -72,3 +72,72 @@ El objetivo de esta sesión es tomar decisiones de estructura para el model `Mov
     pnpm prisma db push
     ```
 </details>
+
+---
+
+### 🛠️ Sub-parte 2: Movement API POST
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 25/05/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+El objetivo de esta sesión es la creación del endpoint POST para `Movements` usando el patrón MVC, es el endpoint más laborioso de este CRUD ya que aparte de la validación de inputs que nos da express-validator construiremos un middleware que valide las reglas de negocios, posteriormente el controlador usaremos prisma transaction para una ejecución limpia y a prueba de errores.
+
+**Steps & Commands:**
+
+1. vamos al archivo `server.ts` donde vamos a declarar un nuevo router para Movements
+    ```typescript
+    //server.ts
+    server.use("/api/movements", router)
+    ```
+2. creamos el archivo especial para movements en la carpeta routes `src/routes/movementRoutes.ts` creamos una instancia de Router (express) y dejamos el camino listo para la creacion de los endpoints, el primero de ellos POST
+    ```typescript
+    //movementRoutes.ts
+    import { Router } from "express"
+
+    const router = Router()
+
+    //POST MOVEMENT
+
+    ```
+3. creamos el endpoint y validamos los inputs con express validator, para saber qué y qué podemos validar volteamos a ver nuestro model, importante antes del controlador agregamos los middleware, `handleInputErrors` que ya tenemos y `validateMovementLogic` `normalizeAmount` que construiremos a continuación.
+    ```typescript
+    router.post("/", 
+        body('type')
+            .notEmpty()
+            .bail()
+            .isIn(['INCOME', 'EXPENSE', 'TRANSFER', 'DEPOSIT', 'WITHDRAWAL'])
+            .withMessage(`Type must be one of: ${['INCOME', 'EXPENSE', 'TRANSFER', 'DEPOSIT', 'WITHDRAWAL'].join(', ')}`),
+        body('amount')
+            .notEmpty()
+            .bail()
+            .isNumeric()
+            .withMessage('Amount must be a number')
+            .toFloat(),
+        body('description')
+            .notEmpty()
+            .bail()
+            .isString()
+            .trim(),
+        body('date')
+            .optional()
+            .isISO8601()
+            .withMessage('Invalid date format')
+            .toDate(),
+        body('incomeAccountId')
+            .optional()
+            .isUUID()
+            .withMessage("The account ID must be a valid UUID"),
+        body('expenseAccountId')
+            .optional()
+            .isUUID()
+            .withMessage("The account ID must be a valid UUID"),
+        handleInputErrors,
+        normalizeAmount,
+        validateMovementLogic,
+        MovementController.createMovement
+    )
+    ```
+</details>
