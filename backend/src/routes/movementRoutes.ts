@@ -1,6 +1,7 @@
 import { Router } from "express"
 import { body } from "express-validator"
-import { handleInputErrors, normalizeAmount } from "../middleware/index.js"
+import { handleInputErrors, normalizeAmount, validateMovementLogic } from "../middleware/index.js"
+import { MovementController } from "../controllers/MovementControllers.js"
 
 const router = Router()
 
@@ -36,7 +37,8 @@ router.post("/",
         .isUUID()
         .withMessage("The account ID must be a valid UUID"),
     handleInputErrors,
-    //validateMovementLogic,
+    validateMovementLogic,
     normalizeAmount,
-    //MovementController.createMovement
+    MovementController.createMovement
 )
+export default router

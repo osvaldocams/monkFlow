@@ -253,5 +253,137 @@ El objetivo de esta sesión es la creación del endpoint POST para `Movements` u
 
         next()
     }
-    ```  
+    ```
+6. siguiendo el fllujo de nuestro patrón MVC toca construir el controller, empezamos creando el archivo `src/controllers/MovementControllers.ts` y creamos con la sintaxis class el controlador para enseguida definir sus metodos.
+    ```typescript
+    import { Request, Response } from "express"
+
+    export class MovementController {
+
+    }
+    ```
+7. Implementamos el método createMovement utilizando las Transacciones Interactivas ($transaction) de Prisma. Este es el corazón financiero de la aplicación, ya que garantiza la atomicidad (ACID) de la operación: o se ejecutan todos los pasos con éxito o se revierte todo, impidiendo que la base de datos quede en un estado inconsistente (ej. que se cree el movimiento pero no se altere el balance).
+
+    Análisis Técnico del Flujo:
+
+    - Transacción Aislada (tx): Pasamos una función anímica al método $transaction que nos provee de un cliente temporal y aislado llamado tx. Todas las mutaciones internas deben llamarse desde tx (no desde prisma) para asegurar que vivan dentro del mismo bloque transaccional.
+
+    - Creación Completa: Se registra el movimiento mapeando directamente los IDs relacionales de las cuentas de origen y destino.
+
+    - Estrategia Contable (Switch Centralizado): Evaluamos el type de movimiento sanitizado para alterar los balances mediante los comandos nativos increment y decrement de Prisma:
+
+    - INCOME / EXPENSE: Afectan de forma unilateral sumando al destino o restando al origen respectivamente.
+
+    - TRANSFER / DEPOSIT / WITHDRAWAL: Al compartir la misma naturaleza semántica de traslado de fondos, se agrupan en un bloque común que ejecuta un decremento en la cuenta emisora y un incremento en la receptora de forma simultánea.
+
+    - Gestión de Ciclo de Vida Automático: Eliminamos el uso manual de sesiones de Mongoose. Si el bloque asíncrono se completa, Prisma ejecuta el COMMIT en Postgres de manera automática. Si ocurre cualquier excepción en el proceso, se dispara un ROLLBACK inmediato que cancela cualquier cambio previo en esa petición.
+    ```typescript
+    export class MovementController {
+        static createMovement = async (req: Request<{}, {}, CreateMovementInput>,res: Response) => {
+            try {
+                const { type, amount, incomeAccountId, expenseAccountId, description, date } = req.body
+
+                // Recuerda: req.body.amount ya viene validado, positivo y a 2 decimales gracias a los middlewares
+
+                // 🚀 Iniciamos la transacción interactiva de Prisma
+                // 'tx' actúa como nuestro cliente de base de datos aislado para esta operación
+                const movement = await prisma.$transaction(async (tx) => {
+                    
+                    // 1️⃣ Crear el registro del movimiento
+                    const newMovement = await tx.movement.create({
+                        data: {
+                            type,
+                            amount, // Prisma se encarga de transformarlo al tipo Decimal de Postgres
+                            description,
+                            date: date ? new Date(date) : undefined,
+                            incomeAccountId,
+                            expenseAccountId
+                        }
+                    })
+
+                    // 2️⃣ Actualizar los balances de las cuentas según el tipo
+                    switch (type) {
+                        case 'INCOME':
+                            await tx.account.update({
+                                where: { id: incomeAccountId },
+                                data: { balance: { increment: amount } } // Suma al destino
+                            })
+                            break
+
+                        case 'EXPENSE':
+                            await tx.account.update({
+                                where: { id: expenseAccountId },
+                                data: { balance: { decrement: amount } } // Resta al origen
+                            })
+                            break
+
+                        case 'TRANSFER':
+                        case 'DEPOSIT':
+                        case 'WITHDRAWAL':
+                            // Los tres movimientos de traslado comparten la misma lógica contable:
+                            // Restar de la cuenta que extrae el dinero
+                            await tx.account.update({
+                                where: { id: expenseAccountId },
+                                data: { balance: { decrement: amount } }
+                            })
+                            // Sumar a la cuenta que inserta el dinero
+                            await tx.account.update({
+                                where: { id: incomeAccountId },
+                                data: { balance: { increment: amount } }
+                            })
+                            break
+                    }
+
+                    // Retornamos el movimiento creado para que salga de la transacción
+                    return newMovement
+                })
+
+                // 3️⃣ Si todo salió bien, Prisma hizo COMMIT automático y respondemos al cliente
+                return res.status(201).json({
+                    message: "Movement created successfully",
+                    movement
+                })
+
+            } catch (error: any) {
+                // Si algo falló adentro, Prisma hizo ROLLBACK automático. Solo reportamos el error.
+                console.error(error)
+                return res.status(500).json({
+                    errors: [{ msg: error.message || 'Error creating movement' }]
+                })
+            }
+        }
+    }
+    ```
+- 🚨​💥​ **ERROR** al ejecutar pruebas en rest client surge error en las declaraciones del router, vamos al archivo `server.ts` ya que necesitamos modificar asignando el router indicado tanto para Account como para Movement
+    ```typescript
+    import express from "express"
+    import accountRouter from "./routes/accountRoutes.js" /*// 👈 asignamos un nombre particular a las importaciones */
+    import movementRouter from "./routes/movementRoutes.js"
+
+    const server = express()
+
+    server.use(express.json())
+
+    //routing
+    server.use("/api/accounts", accountRouter) /*👈 en las rutas asignamos el adecuado */
+    server.use("/api/movements", movementRouter)
+
+    export default server
+    ```
+8. ya podemos crear movimientos, recordar que para que se puedan crear necesitamos un id valido de un account, ya todo es cuestion de realizar pruebas y verificar que nuestras reglas se apliquen
+    ```
+    //----------------------
+    ### MOVEMENTS
+    //----------------------
+    ### POST MOVEMENT
+    POST http://localhost:3000/api/movements
+    Content-Type: application/json
+
+    {
+        "type": "INCOME",
+        "description": "Test Movement",
+        "amount": 100,
+        "incomeAccountId": "6f91e748-0c5a-42d3-a011-1139ef16854e"
+    }
+    ```
 </details>
