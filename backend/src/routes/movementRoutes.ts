@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { body } from "express-validator"
+import { body, param } from "express-validator"
 import { handleInputErrors, normalizeAmount, validateMovementLogic } from "../middleware/index.js"
 import { MovementController } from "../controllers/MovementControllers.js"
 
@@ -41,4 +41,16 @@ router.post("/",
     normalizeAmount,
     MovementController.createMovement
 )
+
+// GET ALL MOVEMENTS
+router.get('/', MovementController.getAllMovements)
+
+// GET MOVEMENT BY ID
+router.get("/:id",
+    param("id")
+        .isUUID().withMessage("the movement ID must be a valid UUID"),
+    handleInputErrors,
+    MovementController.getMovementById
+)
+
 export default router

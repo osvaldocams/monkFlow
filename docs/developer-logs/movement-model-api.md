@@ -387,3 +387,116 @@ El objetivo de esta sesión es la creación del endpoint POST para `Movements` u
     }
     ```
 </details>
+
+---
+
+### 🛠️ Sub-parte 3: API GET & GET by id
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 24/05/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+El objetivo de esta sesión es definir los endpoint GET y GET by id de Movement usando el patron MVC
+
+**Steps & Commands:**
+
+1. En el archivo `movementRoutes.ts` definimos la ruta para GET, al no contener inputs no será necesario realizar validaciones
+    ```typescript
+    // GET ALL MOVEMENTS
+    router.get('/', MovementController.getAllMovements)
+    ```
+2. vamos al archivo de los controllers `movementControllers.ts` definimos un nuevo metodo `getAllMovements`
+    ```typescript
+    static getAllMovements = async (req: Request, res: Response) => {
+        try {
+            const movements = await prisma.movement.findMany({
+                include:{
+                    incomeAccount:{
+                        select:{
+                            id:true,
+                            name:true,
+                            kind:true
+                        }
+                    },
+                    expenseAccount:{
+                        select:{
+                            id:true,
+                            name:true,
+                            kind:true
+                        }
+                    }
+                },
+                orderBy:{
+                    date:'desc'
+                }
+            })
+            res.status(200).json(movements)
+        } catch (error) {
+            console.error(error)
+            res.status(500).json({
+                errors: [{ msg: 'Error fetching movements' }]
+            })
+        }
+    }
+    ```
+3. relizamos una peticion en rest client para verificar
+    ```
+    ### GET MOVEMENTS
+    GET http://localhost:3000/api/movements
+    ```
+    > 💡 **Nota de Consistencia de Datos:** En la respuesta del JSON, las propiedades `incomeAccount` y `expenseAccount` devolverán `null` de forma selectiva según el `type` de movimiento (ej. un `INCOME` tendrá `expenseAccount: null`). Esto es el comportamiento esperado derivado de la flexibilidad del esquema relacional y asegura un contrato predecible para el consumo en el Frontend.
+4. Vamos a `movementRoutes.ts` ahora trabajaremos con el GET by id en este caso al ser especifico usaremos la propiedad param de express validator para capturar el id y enseguida las validaciones.
+    ```typescript
+    // GET MOVEMENT BY ID
+    router.get("/:id",
+        param("id")
+            .isUUID().withMessage("the movement ID must be a valid UUID"),
+        handleInputErrors,
+        MovementController.getMovementById
+    )
+    ```
+5. creamos el metodo `getMovementByID`
+    ```typescript
+    static getMovementById = async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params as { id: string }
+
+            const movement = await prisma.movement.findUnique({
+                where: { id },
+                include:{
+                    incomeAccount:{
+                        select:{
+                            id:true,
+                            name:true,
+                            kind:true
+                        }
+                    },
+                    expenseAccount:{
+                        select:{
+                            id:true,
+                            name:true,
+                            kind:true
+                        }
+                    }
+                },
+            })
+            if (!movement) {
+                return res.status(404).json({ error: "Movement not found" })
+            }
+        
+            res.status(200).json(movement)
+        } 
+        catch (error) {
+            console.error(error)
+            res.status(500).json({ errors: [{"msg": "Error fetching movement"}] })
+        }
+    }
+    ```
+6. podemos hacer una prueba en rest client
+    ```
+    ### GET MOVEMENT BY ID
+    GET http://localhost:3000/api/movements/3cf73f1e-0e0a-4c90-b87d-17801b1e6dfa
+    ```
+</details>

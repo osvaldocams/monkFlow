@@ -85,4 +85,69 @@ export class MovementController {
             })
         }
     }
+    static getAllMovements = async (req: Request, res: Response) => {
+        try {
+            const movements = await prisma.movement.findMany({
+                include:{
+                    incomeAccount:{
+                        select:{
+                            id:true,
+                            name:true,
+                            kind:true
+                        }
+                    },
+                    expenseAccount:{
+                        select:{
+                            id:true,
+                            name:true,
+                            kind:true
+                        }
+                    }
+                },
+                orderBy:{
+                    date:'desc'
+                }
+            })
+            res.status(200).json(movements)
+        } catch (error) {
+            console.error(error)
+            res.status(500).json({
+                errors: [{ msg: 'Error fetching movements' }]
+            })
+        }
+    }
+    static getMovementById = async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params as { id: string }
+
+            const movement = await prisma.movement.findUnique({
+                where: { id },
+                include:{
+                    incomeAccount:{
+                        select:{
+                            id:true,
+                            name:true,
+                            kind:true
+                        }
+                    },
+                    expenseAccount:{
+                        select:{
+                            id:true,
+                            name:true,
+                            kind:true
+                        }
+                    }
+                },
+            })
+            if (!movement) {
+                return res.status(404).json({ error: "Movement not found" })
+            }
+        
+            res.status(200).json(movement)
+        } 
+        catch (error) {
+            console.error(error)
+            res.status(500).json({ errors: [{"msg": "Error fetching movement"}] })
+        }
+    }
 }
