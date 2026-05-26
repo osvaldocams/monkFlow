@@ -500,3 +500,131 @@ El objetivo de esta sesión es definir los endpoint GET y GET by id de Movement 
     GET http://localhost:3000/api/movements/3cf73f1e-0e0a-4c90-b87d-17801b1e6dfa
     ```
 </details>
+
+---
+
+### 🛠️ Sub-parte 4: API DELETE
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 24/05/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+El objetivo de esta sesión es definir los endpoint DELETE de Movement usando el patron MVC
+
+**Steps & Commands:**
+
+1. En el archivo `movementRoutes.ts` definimos la ruta para DELETE, usamo param de express validator para obtener el id y validamos que este sea de tipo UUID
+    ```typescript
+    // DELETE MOVEMENT
+    router.delete("/:id",
+        param("id")
+            .isUUID()
+            .withMessage("the movement ID must be a valid UUID"),
+        handleInputErrors,
+        MovementController.deleteMovement
+    )
+    ```
+2. Creamos el método deleteMovement en src/controllers/MovementController.ts. Este endpoint representa una operación destructiva de alto impacto contable, por lo que implementamos las Transacciones Interactivas ($transaction) para ejecutar una reversión atómica y defensiva dividida en 6 etapas lógicas:
+
+    1) Aislamiento Transaccional (tx): Abrimos un bloque atómico en Postgres. Si cualquiera de los pasos posteriores falla, la base de datos ejecuta un ROLLBACK automático, impidiendo que el movimiento se borre si los balances no se pudieron restaurar.
+
+    2) Verificación Explicita & Casteo: Validamos la existencia real del registro. Al recuperar el movimiento, convertimos el campo amount (que Prisma maneja como tipo Decimal nativo de Postgres) a un entero seguro de JavaScript mediante .toNumber(), envolviéndolo en Math.abs() para garantizar operaciones basadas en valores absolutos.
+
+    3) Chequeos Defensivos de Integridad: Validamos mediante "cortocircuitos" que las llaves foráneas (incomeAccountId y expenseAccountId) requeridas para cada tipo de movimiento existan físicamente en el registro antes de alterar balances, mitigando corrupción de datos fantasma.
+
+    4) Reversión Matemática de Balances (Estrategia Inversa): Implementamos un switch centralizado que aplica la lógica contable opuesta al POST para devolver el dinero a su estado original:
+
+    INCOME: Se ejecuta un decrement para sustraer el dinero que simuló ingresar.
+
+    EXPENSE: Se ejecuta un increment para reembolsar los fondos retirados de la cuenta origen.
+
+    TRANSFER / DEPOSIT / WITHDRAWAL: Al operar como traslados entre dos entidades, el bloque unificado deshace el puente devolviendo el dinero al origen (increment) y retirándolo del destino (decrement).
+
+    5) Purga Física: Habiendo asegurado y recalculado con éxito la consistencia de los balances bancarios, procedemos a invocar tx.movement.delete para eliminar definitivamente el registro.
+
+    6) Gestión de Excepciones Unificada: Centralizamos el manejo de errores en el bloque catch. Diferenciamos semánticamente las respuestas HTTP devolviendo un 404 si el movimiento no existía, un 400 si violaba la integridad defensiva, o un 500 general si Postgres abortó la transacción.
+    ```typescript
+    static deleteMovement = async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params as { id: string }
+
+            //1)inicia transacción interactiva de Prisma
+            const result = await prisma.$transaction(async(tx) =>{
+                //2)verificar que el movimiento existe
+                const movement = await tx.movement.findUnique({
+                    where:{id}
+                })
+                if(!movement){
+                    throw new Error("Movement not found")
+                }
+                const { type, amount, incomeAccountId, expenseAccountId } = movement
+                const absAmount = Math.abs(amount.toNumber()) // Convertimos Decimal a number y tomamos el valor absoluto
+                
+                //3)Chequeos defensivos de integridad (adaptados a las relaciones opcionales)
+                if(['INCOME', 'TRANSFER', 'DEPOSIT'].includes(type) && !incomeAccountId){
+                    throw new Error("Income account missing in movement")
+                }
+                if (["EXPENSE", "TRANSFER", "WITHDRAWAL"].includes(type) && !expenseAccountId) {
+                throw new Error("Expense account missing in movement")
+                }
+
+                //4)Revertir el impacto del movimiento según su tipo
+                switch (type){
+                    case 'INCOME':
+                        await tx.account.update({
+                            where:{id: incomeAccountId!},
+                            data:{ balance: { decrement: absAmount } }
+                        })
+                        break
+                    case 'EXPENSE':
+                        await tx.account.update({
+                            where:{id: expenseAccountId!},
+                            data:{ balance: { increment: absAmount } }
+                        })
+                        break
+                    case 'TRANSFER':
+                    case 'DEPOSIT':
+                    case 'WITHDRAWAL':
+                        await tx.account.update({
+                            where:{id: expenseAccountId!},
+                            data:{ balance: { increment: absAmount } }
+                        })
+                        await tx.account.update({
+                            where:{id: incomeAccountId!},
+                            data:{ balance: { decrement: absAmount } }
+                        })
+                        break
+                }
+                //5)Eliminar el movimiento
+                await tx.movement.delete({
+                    where:{id}
+                })
+                return { message: "Movement deleted successfully" }
+            })
+            //6)Si todo salió bien, Prisma hizo COMMIT automático y respondemos al cliente
+            return res.json(result)
+        } catch (error:any) {
+            console.error(error)
+            // Manejamos el error específico del 404 o bad request
+            if (error.message === "Movement not found") {
+                return res.status(404).json({ errors: [{ msg: error.message }] })
+            }
+            if (error.message.includes("missing in movement")) {
+                return res.status(400).json({ errors: [{ msg: error.message }] })
+            }
+            // Error general del servidor (aquí cae si el rollback se ejecutó)
+            return res.status(500).json({
+                errors: [{ msg: "Error deleting movement" }]
+            })
+        }
+    }
+    ```
+3. hacemos una prueba en rest client para comprobar su funcionamiento
+    ```
+    ### DELETE MOVEMENT
+    DELETE http://localhost:3000/api/movements/3cf73f1e-0e0a-4c90-b87d-17801b1e6dfa
+    ```
+
+</details>

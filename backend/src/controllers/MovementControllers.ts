@@ -150,4 +150,78 @@ export class MovementController {
             res.status(500).json({ errors: [{"msg": "Error fetching movement"}] })
         }
     }
+    static deleteMovement = async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params as { id: string }
+
+            //1)inicia transacción interactiva de Prisma
+            const result = await prisma.$transaction(async(tx) =>{
+                //2)verificar que el movimiento existe
+                const movement = await tx.movement.findUnique({
+                    where:{id}
+                })
+                if(!movement){
+                    throw new Error("Movement not found")
+                }
+                const { type, amount, incomeAccountId, expenseAccountId } = movement
+                const absAmount = Math.abs(amount.toNumber()) // Convertimos Decimal a number y tomamos el valor absoluto
+                
+                //3)Chequeos defensivos de integridad (adaptados a las relaciones opcionales)
+                if(['INCOME', 'TRANSFER', 'DEPOSIT'].includes(type) && !incomeAccountId){
+                    throw new Error("Income account missing in movement")
+                }
+                if (["EXPENSE", "TRANSFER", "WITHDRAWAL"].includes(type) && !expenseAccountId) {
+                throw new Error("Expense account missing in movement")
+                }
+
+                //4)Revertir el impacto del movimiento según su tipo
+                switch (type){
+                    case 'INCOME':
+                        await tx.account.update({
+                            where:{id: incomeAccountId!},
+                            data:{ balance: { decrement: absAmount } }
+                        })
+                        break
+                    case 'EXPENSE':
+                        await tx.account.update({
+                            where:{id: expenseAccountId!},
+                            data:{ balance: { increment: absAmount } }
+                        })
+                        break
+                    case 'TRANSFER':
+                    case 'DEPOSIT':
+                    case 'WITHDRAWAL':
+                        await tx.account.update({
+                            where:{id: expenseAccountId!},
+                            data:{ balance: { increment: absAmount } }
+                        })
+                        await tx.account.update({
+                            where:{id: incomeAccountId!},
+                            data:{ balance: { decrement: absAmount } }
+                        })
+                        break
+                }
+                //5)Eliminar el movimiento
+                await tx.movement.delete({
+                    where:{id}
+                })
+                return { message: "Movement deleted successfully" }
+            })
+            //6)Si todo salió bien, Prisma hizo COMMIT automático y respondemos al cliente
+            return res.json(result)
+        } catch (error:any) {
+            console.error(error)
+            // Manejamos el error específico del 404 o bad request
+            if (error.message === "Movement not found") {
+                return res.status(404).json({ errors: [{ msg: error.message }] })
+            }
+            if (error.message.includes("missing in movement")) {
+                return res.status(400).json({ errors: [{ msg: error.message }] })
+            }
+            // Error general del servidor (aquí cae si el rollback se ejecutó)
+            return res.status(500).json({
+                errors: [{ msg: "Error deleting movement" }]
+            })
+        }
+    }
 }

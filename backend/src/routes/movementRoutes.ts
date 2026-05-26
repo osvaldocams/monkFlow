@@ -53,4 +53,13 @@ router.get("/:id",
     MovementController.getMovementById
 )
 
+// DELETE MOVEMENT
+router.delete("/:id",
+    param("id")
+        .isUUID()
+        .withMessage("the movement ID must be a valid UUID"),
+    handleInputErrors,
+    MovementController.deleteMovement
+)
+
 export default router
