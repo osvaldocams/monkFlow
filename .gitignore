@@ -51,3 +51,23 @@ pnpm-debug.log*
 # -------------------------
 *.http
 backend/*.http
+
+# Vite cache
+.vite/
+
+# FRONTEND CONFIG
+# Ignora carpetas temporales dentro de la subcarpeta frontend
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.vite/
+
+# Ignora archivos locales de entorno del cliente
+/frontend/.env
+/frontend/.env.local
+/frontend/.env.*.local
+
+# Logs y temporales de empaquetado
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+/frontend/pnpm-debug.log*
