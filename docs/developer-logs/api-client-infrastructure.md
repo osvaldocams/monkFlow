@@ -73,3 +73,51 @@ El objetivo de esta subparte es centralizar el llamado a la rest api mediante ax
 
 ---
 
+### 🛠️ Sub-parte 2: REACT QUERY INSTALACIÓN Y CONFIGURACIÓN
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 02/06/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+El objetivo de esta subparte es realizar las instalaciones de `tanstack react query` y realizar la instancia de un queryClient y el wrapper con QueryClientProvider, en este caso lo haremos en el archivo `src/router.tsx`
+
+**Steps & Commands:**
+
+1. realizamos las instalaciones de tanstack react query y sus dev tools
+    ```bash
+    cd frontend
+    pnpm add @tanstack/react-query
+    pnpm add -D @tanstack/react-query-devtools
+    ```
+2. vamos al archivo `router.tsx` importamos las herramientas, realizamos la instancia de queryClient y el wrapper
+    ```tsx
+    //router.tsx
+    import { QueryClient, QueryClientProvider } from "@tanstack/react-query" // 👈 Importamos TanStack
+
+    // Inicializamos el cliente de React Query fuera del componente para evitar que se recree en cada render
+    const queryClient = new QueryClient({
+        defaultOptions: {
+            queries: {
+                // Configuraciones Zen opcionales por defecto (ej: evitar re-peticiones al cambiar de pestaña)
+                refetchOnWindowFocus: false, 
+                retry: 1 
+            }
+        }
+    })
+    export default function Router() {
+        return (
+            <QueryClientProvider client={queryClient}> {/* 👈 Envolvemos toda la app */}
+                <BrowserRouter>
+                    <Routes>
+                        <Route element={<AppLayout />}>
+                            <Route index element={<DashboardView />} />
+                        </Route>
+                    </Routes>
+                </BrowserRouter>
+            </QueryClientProvider>
+        )
+    }
+    ```
+</details>
