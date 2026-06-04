@@ -213,3 +213,45 @@ El objetivo de esta subparte es crear un servicio get para mostrar los Movements
     ```
 
 </details>
+
+---
+
+### 🛠️ Sub-parte 3: CUSTOM HOOK useMovements
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 04/06/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+El objetivo de esta subparte es abstraer la lógica de TanStack Query dentro de un Custom Hook personalizado. Optamos por un diseño de **desestructuración y purificación de retorno** en lugar de exponer el objeto Query crudo. Esto encapsula la infraestructura de red, formatea los tipos de error hacia la vista y permite un consumo directo y semántico en los componentes de la interfaz.
+
+**Steps & Commands:**
+
+1. empezamos creando el archivo `src/hooks/useMovements.ts` la idea de momento es construir una función que consuma nuestro servicio `getMovements`
+    ```typescript
+    import { useQuery } from '@tanstack/react-query'
+    import { MovementAPI } from '@/api/MovementAPI'
+    
+     export const useMovements = () => {
+        //haremos una instancia de useQuery, pero que contiene?
+        // data: contiene lo que retorna tu función getMovements (los movimientos ya validadas por Zod)
+        // isLoading: true mientras la promesa de axios está pendiente
+        // isError: true si axios o Zod lanzaron un throw
+        // error: el objeto de error con el mensaje que definimos en el catch
+        const {data, isLoading, isError, error} = useQuery({
+            queryKey: ['movements'], //identificador unico para el cache
+            queryFn: MovementAPI.getMovemets //el servicio
+        })
+        return {
+            data,
+            isLoading,
+            isError,
+            // Homologamos el mensaje extraído por nuestro controlador central de errores
+            errorMessage: error instanceof Error ? error.message : null
+        }
+     }
+    ```
+
+</details>
+
