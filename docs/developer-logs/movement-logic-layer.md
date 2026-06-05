@@ -91,6 +91,7 @@ El objetivo de esta subparte es crear un archivo centralizado para los types y z
     export type Movement = z.infer<typeof movementSchema>
     ```
 </details>
+
 ---
 
 ### 🛠️ Sub-parte 2: MovementAPI.ts y Manejo de Errores
@@ -252,6 +253,65 @@ El objetivo de esta subparte es abstraer la lógica de TanStack Query dentro de 
         }
      }
     ```
+
+</details>
+
+---
+
+### 🛠️ Sub-parte 4: SMOKE TEST
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 04/06/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+El objetivo de esta subparte fue realizar una prueba de humo (Smoke Test) para estresar el funcionamiento integrado de toda la capa lógica (Servicio API, tipados nativos, esquemas Zod de validación, Custom Hook y el manejador centralizado de excepciones). La sesión demostró el valor de la programación defensiva al capturar discrepancias críticas de nulidad entre la base de datos y el cliente en tiempo de ejecución.
+
+**Steps & Commands:**
+
+1. **Prueba 1: Render de Éxito & Validación en Tiempo de Ejecución**  
+   Montamos un renderizado de prueba provisional en `src/views/DashboardView.tsx` consumiendo las propiedades desestructuradas del Custom Hook:
+```tsx
+import { useMovements } from "@/hooks/useMovements"
+
+export default function DashboardView() {
+    const { movements, isLoading, isError, errorMessage } = useMovements()
+
+    if (isLoading) return <div className="p-6 text-sage animate-pulse">Cargando flujos de MonkFlow...</div>
+    
+    if (isError) return <div className="p-6 text-rose-500 font-semibold">🚨 Error: {errorMessage}</div>
+
+    return (
+        <div className="p-6 bg-stone-50 min-h-screen">
+            <h1 className="text-2xl font-bold text-obsidian mb-4">Smoke Test: Capa de Lógica</h1>
+            <pre className="bg-white p-4 border border-stone-200 rounded-lg overflow-auto max-h-96 text-xs text-stone-700">
+                {JSON.stringify(movements, null, 2)}
+            </pre>
+        </div>
+    )
+}
+```
+*   **Resultado Inicial:** 🚨 Fallido por validación defensiva de Zod.  
+*   **Diagnóstico:** El registro #4 de la base de datos correspondía a un `EXPENSE`, devolviendo la relación `incomeAccount: null`. Nuestro esquema original usaba `.optional()`, lo cual acepta valores ausentes (`undefined`) pero rechaza explícitamente los `null` enviados por Prisma.
+*   **Solución:** Ajustamos el modelo en `src/types/index.ts` incorporando `.nullable()` para absorber correctamente el comportamiento de la base de datos relacional de Neon:
+```typescript
+    export const movementSchema = z.object({
+        id: z.string().uuid(),
+        type: movementTypeSchema,
+        date: z.string().datetime(),
+        amount: z.coerce.number().positive("El monto debe ser mayor a cero"),
+        description: z.string().max(200, "La descripción es demasiado larga").optional().nullable(),
+        incomeAccount: accountSchema.optional().nullable(), // 👈 Permite tanto undefined como null
+        expenseAccount: accountSchema.optional().nullable(), // 👈 Permite tanto undefined como null
+        tags: z.array(z.string()).default([])
+    })
+```
+*   **Segundo Intento:** ✅ Exitoso. Los datos fluyeron limpios al componente en formato JSON.
+
+2. **Prueba 2: Simulación de Errores del Servidor (Capa de Excepciones)**  
+   Forzamos intencionalmente un código de estado `HTTP 400` en el controlador del backend devolviendo un payload `{ error: "Acceso denegado o parámetros incorrectos" }`.
+    *   **Resultado:** ✅ Exitoso. La interfaz interceptó el error imprimiendo el string amigable, y la consola del navegador agrupó limpiamente los detalles técnicos (`Status`, `Payload` y `Contexto`) gracias a la lógica estructurada con `console.group` en nuestro archivo `handleApiErrors.ts`.
 
 </details>
 

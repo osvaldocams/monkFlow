@@ -22,8 +22,8 @@ export const movementSchema = z.object({
     date: z.string().datetime(),//ISO string
     amount: z.coerce.number().positive("El monto debe ser mayor a cero"),
     description: z.string().max(200, "La descripción es demasiado larga").optional(),
-    incomeAccount: accountSchema.optional(),
-    expenseAccount: accountSchema.optional(),
+    incomeAccount: accountSchema.optional().nullable(),
+    expenseAccount: accountSchema.optional().nullable(),
     tags: z.array(z.string()).default([])
 })
 
