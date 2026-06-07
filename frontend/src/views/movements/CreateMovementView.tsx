@@ -1,21 +1,16 @@
 import { useForm, FormProvider } from "react-hook-form"
 import MovementForm from "@/components/movements/MovementForm"
+import { movementFormSchema, type CreateMovementDto, type MovementFormInputs } from "@/types"
+import { zodResolver } from "@hookform/resolvers/zod"
 
-// 💡 Definimos un tipo temporal para el tipado del formulario
-type FormFieldsTemporal = {
-    type: "income" | "expense"
-    date: string
-    amount: number
-    description: string
-    incomeAccountId?: string
-    expenseAccountId?: string
-}
+
 
 export default function CreateMovementView() {
     //1 Inicializamos la central de React Hook Form
-    const methods = useForm<FormFieldsTemporal>({
+    const methods = useForm<MovementFormInputs>({
+        resolver: zodResolver(movementFormSchema), // Conectamos el esquema de Zod para validación
         defaultValues: {
-            type: "income",
+            type: "INCOME",
             date: new Date().toISOString().split('T')[0], // Fecha de hoy por defecto
             amount: 0,
             description: ""
@@ -23,7 +18,7 @@ export default function CreateMovementView() {
     })
     
     //2 Función que se ejecuta SOLO si todas las validaciones pasan
-    const onSubmit = (data: FormFieldsTemporal) => {
+    const onSubmit = (data: CreateMovementDto) => {
         console.log("🚀 Datos validados listos para enviar al backend:", data)
     }
     return (

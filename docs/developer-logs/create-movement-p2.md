@@ -1,15 +1,30 @@
+# 📓 Phase 9.1: CREATE MOVEMENTS
 
-import { z } from 'zod'
+Este archivo es la continuación de la fase 9 donde ya se registró el proceso del enrutamientos, vistas base provisionales, estructura de formulario con react-hook-form, para eeste achivo nos enfocaremos en validación de información con zod schemas, servicios api y su implementación con mutaciones. 
 
-// ==========================================
-// 🔥 ESQUEMAS ACCOUNT
-// ==========================================
+---
 
-export const accountSchema = z.object({
-    id: z.string().uuid(),
-    name: z.string()
-})
+### 🎯 Objective
+El objetivo es que al final de la fase podamos crear movimientos escribiendolos desde la interfaz de usuario y podamos renderizarlos en una lista de movimientos
 
+---
+
+### 🛠️ Sub-parte 2: zod schemas
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 07/06/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+El objetivo de esta sesión fue centralizar las reglas de negocio y la validación estructural del formulario utilizando Zod. En lugar de delegar las restricciones lógicas al backend o dispersarlas en componentes de React, construimos un esquema unificado capaz de resolver tres frentes: la coerción de datos del navegador, la validación cruzada interdependiente y la mutación limpia de tipos para el canal de transporte (Axios).
+
+Decisión de Arquitectura Crítica (El Patrón de Doble Interfaz): Un formulario en el navegador opera nativamente con strings (como los campos vacíos "" de los elementos <select>). Sin embargo, PostgreSQL y Prisma esperan valores null estrictos en sus llaves foráneas opcionales. En lugar de crear múltiples esquemas de mapeo, encapsulamos todo en un único flujo continuo (z.object -> .superRefine -> .transform). Mediante el uso estratégico de z.input y z.output, extraemos el contrato de UI para React Hook Form y el DTO final para el API Service desde la misma fuente de verdad.
+
+**Steps & Commands:**
+
+1. Creamos el esquema robusto en el archivo de tipos central. Implementamos z.coerce para mitigar el comportamiento de HTML5 con los montos numéricos, superRefine para inyectar issues quirúrgicos en los campos según el tipo de movimiento (INCOME, EXPENSE, TRANSFER, etc.), y .transform() como aduana final.
+```typescript
 // ==========================================
 // 🔥 ESQUEMAS MOVEMENT
 // ==========================================
@@ -100,22 +115,31 @@ export type MovementFormInputs = z.input<typeof movementFormSchema>
 
 // 🚀 Tipo de Salida: El contrato de los datos ya limpios y transformados que recibirá Axios
 export type CreateMovementDto = z.output<typeof movementFormSchema>
+```
+2. Refactorización e Inyección del Resolver en la Vista Inteligente. Sustituimos el contrato estructural intermedio (FormFieldsTemporal) de la vista e instalamos el zodResolver. Esto vincula las emisiones de errores dinámicos de Zod directamente al estado nativo de React Hook Form, alimentando tanto a los inputs hijos como a la caja de depuración global de la Fase 1.5.
+```typescript
+import { useForm, FormProvider } from "react-hook-form"
+import MovementForm from "@/components/movements/MovementForm"
+import type { CreateMovementDto, MovementFormInputs } from "@/types"
 
+//1️⃣ YA NO TENEMOS TYPE TEMPORAL
 
-// ******esquemas core de la api (respuestas get)******
+export default function CreateMovementView() {
 
-export const movementSchema = z.object({
-    id: z.string().uuid(),
-    type: movementTypeSchema,
-    date: z.string(), // Dejado laxo por si el backend no manda formato ISO estricto
-    amount: z.coerce.number().positive("El monto debe ser mayor a cero"),
-    description: z.string().max(200, "La descripción es demasiado larga").optional(),
-    incomeAccount: accountSchema.optional().nullable(),
-    expenseAccount: accountSchema.optional().nullable(),
-    tags: z.array(z.string()).default([])
-})
-
-export const movementListSchema = z.array(movementSchema)
-
-export type MovementList = z.infer<typeof movementListSchema>
-export type Movement = z.infer<typeof movementSchema>
+    const methods = useForm<MovementFormInputs>({ //2️⃣useForm adopta el tipo de Entrada para mapear los controles del DOM de forma síncrona
+        resolver: zodResolver(movementFormSchema), //3️⃣​ Acoplamos las reglas e interceptores de Zod
+        defaultValues: { //4️⃣​ahora default values reales
+            type: "INCOME",
+            date: new Date().toISOString().split('T')[0], 
+            amount: 0,
+            description: ""
+        }
+    })
+    
+    //Función que se ejecuta SOLO si todas las validaciones pasan
+    const onSubmit = (data: CreateMovementDto) => { //5️⃣​ l callback de sumisión recibe la estructura de salida mutada (Garantía Cero Any)
+        console.log("🚀 Datos validados listos para enviar al backend:", data)
+    }
+    return (
+        resto...)
+```
