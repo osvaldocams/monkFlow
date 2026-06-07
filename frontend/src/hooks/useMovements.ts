@@ -1,16 +1,36 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MovementAPI } from '@/api/MovementAPI'
+import type { CreateMovementDto } from '@/types'
+
+//==============================================
+//  hook para consultar lista de movimientos
+//==============================================
 
 export const useMovements = () => {
-    const {data, isLoading, isError, error} = useQuery({
-        queryKey: ['movements'], //identificador unico para el cache
-        queryFn: MovementAPI.getMovements //el servicio
+    const query = useQuery({ //1️⃣​
+        queryKey: ['movements'], 
+        queryFn: MovementAPI.getMovements
     })
     return {
-        data,
-        isLoading,
-        isError,
-        // Homologamos el mensaje extraído por nuestro controlador central de errores
-        errorMessage: error instanceof Error ? error.message : null
+        ...query, // 2️⃣​
+        errorMessage: query.error instanceof Error ? query.error.message : null
     }
+}
+
+//==============================================
+//  hook para mutación/creación de nuevos movimientos
+//==============================================
+export const useCreateMovement = () => {//3️⃣ creamos nuestro hook para la mutación de creación de movimientos
+    const queryClient = useQueryClient() //4️⃣ ​Para invalidar cache después de crear un movimiento
+    
+    return useMutation({ //5️⃣ usamos useMutation para manejar la creación de movimientos 
+        mutationFn: (formData: CreateMovementDto) => MovementAPI.createMovement(formData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["movements"] })
+            console.log("¡Movimiento creado con éxito en la base de datos!")
+        },
+        onError: (error) => {
+            console.error("Error en la mutación:", error)
+        }
+    })
 }
