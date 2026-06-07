@@ -88,8 +88,8 @@ export const movementFormSchema = z.object({
 .transform((data) => ({
     ...data,
     description: data.description || undefined,
-    incomeAccountId: data.incomeAccountId === '' ? null : data.incomeAccountId ?? null,
-    expenseAccountId: data.expenseAccountId === '' ? null : data.expenseAccountId ?? null,
+    incomeAccountId: data.incomeAccountId === '' ? undefined : data.incomeAccountId ?? undefined,
+    expenseAccountId: data.expenseAccountId === '' ? undefined : data.expenseAccountId ?? undefined,
 }))
 
 // El único tipo que vas a necesitar para registrar useForm<MovementFormData>

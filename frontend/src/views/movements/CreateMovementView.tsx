@@ -2,8 +2,7 @@ import { useForm, FormProvider } from "react-hook-form"
 import MovementForm from "@/components/movements/MovementForm"
 import { movementFormSchema, type CreateMovementDto, type MovementFormInputs } from "@/types"
 import { zodResolver } from "@hookform/resolvers/zod"
-
-
+import { useCreateMovement } from "@/hooks/useMovements"
 
 export default function CreateMovementView() {
     //1 Inicializamos la central de React Hook Form
@@ -16,10 +15,13 @@ export default function CreateMovementView() {
             description: ""
         }
     })
+
+    const createMovementMutation = useCreateMovement()
     
     //2 Función que se ejecuta SOLO si todas las validaciones pasan
     const onSubmit = (data: CreateMovementDto) => {
         console.log("🚀 Datos validados listos para enviar al backend:", data)
+        createMovementMutation.mutate(data)
     }
     return (
         <div className="max-w-3xl mx-auto p-6">
@@ -35,8 +37,12 @@ export default function CreateMovementView() {
                     
                     <MovementForm /> {/* El hijo no recibe NINGUNA prop, está en el mismo canal de radio */}
 
-                    <button type="submit" className="w-full border bg-sage text-black py-2 px-4 rounded-md font-medium hover:bg-opacity-90 transition-colors">
-                        Guardar Transacción
+                    <button 
+                        type="submit" 
+                        className="w-full border bg-sage text-black py-2 px-4 rounded-md font-medium hover:bg-opacity-90 transition-colors"
+                        disabled={createMovementMutation.isPending}
+                        >
+                        {createMovementMutation.isPending ? "Creando..." : "Crear Movimiento"}
                     </button>
                     {/* Debug: Muestra los errores actuales */}
                     {Object.keys(methods.formState.errors).length > 0 && (

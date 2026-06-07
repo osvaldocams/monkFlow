@@ -33,6 +33,8 @@ export default function MovementForm() {
                     <option value="INCOME">Ingreso</option>
                     <option value="EXPENSE">Gasto</option>
                     <option value="TRANSFER">Transferencia</option>
+                    <option value="DEPOSIT">Depósito</option>
+                    <option value="WITHDRAWAL">Retiro</option>
                 </select>
             </div>
 
@@ -81,8 +83,9 @@ export default function MovementForm() {
                     className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150"
                 >
                     <option value="">-- Seleccionar --</option>
-                    <option value="uuid-cuenta-1">EFECTIVO</option>
-                    <option value="uuid-cuenta-2">BBVA</option>
+                    <option value="1524ec1f-cccf-4c50-ad8a-efa1d6b17c12">MERCADOPAGO</option>
+                    <option value="6f91e748-0c5a-42d3-a011-1139ef16854e">BBVA</option>
+                    <option value="0b4643a4-c544-4a34-83b8-122f84c72dca">CASH</option>
                 </select>
             </div>
 
@@ -93,8 +96,9 @@ export default function MovementForm() {
                     className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150"
                 >
                     <option value="">-- Seleccionar --</option>
-                    <option value="uuid-cuenta-1">EFECTIVO</option>
-                    <option value="uuid-cuenta-2">BBVA</option>
+                    <option value="1524ec1f-cccf-4c50-ad8a-efa1d6b17c12">MERCADOPAGO</option>
+                    <option value="6f91e748-0c5a-42d3-a011-1139ef16854e">BBVA</option>
+                    <option value="0b4643a4-c544-4a34-83b8-122f84c72dca">EFECTIVO</option>
                 </select>
             </div>
 

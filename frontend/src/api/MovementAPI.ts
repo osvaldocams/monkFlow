@@ -1,8 +1,16 @@
 import api from "@/lib/axios"
-import { movementListSchema, type MovementList } from "@/types"
+import { movementListSchema, type CreateMovementDto, type MovementList } from "@/types"
 import { handleApiError } from "./handleApiErrors"
 
 export const MovementAPI = {
+    createMovement: async (dtoData: CreateMovementDto) => {
+        try {
+            const { data } = await api.post("/movements", dtoData)
+            return data
+        } catch (error) {
+            handleApiError(error, 'Error creating movement', dtoData )
+        }
+    },
     /** 
      * obtener la colección completa de movimientos desde el backend
      * validando las respuestas con Zod para asegurar la integridad de los datos en el frontend
