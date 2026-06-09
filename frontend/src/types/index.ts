@@ -5,10 +5,21 @@ import { z } from 'zod'
 // 🔥 ESQUEMAS ACCOUNT
 // ==========================================
 
-export const accountSchema = z.object({
-    id: z.string().uuid(),
-    name: z.string()
+export const accountTypeSchema = z.enum(["CASH", "BANK"], {
+    message: "Selecciona un tipo de cuenta válido"
 })
+
+export const accountSchema = z.object({
+    id: z.string().uuid("El ID de la cuenta debe ser un UUID válido"),
+    name: z.string().min(1, "El nombre de la cuenta es obligatorio"),
+    kind: accountTypeSchema,
+    balance: z.coerce.number()
+})
+
+export const accountListSchema = z.array(accountSchema)
+
+export type Account = z.infer<typeof accountSchema>
+export type AccountList = z.infer<typeof accountListSchema>
 
 // ==========================================
 // 🔥 ESQUEMAS MOVEMENT

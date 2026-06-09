@@ -1,22 +1,11 @@
 // src/components/movements/MovementForm.tsx
 import type { MovementFormInputs } from "@/types"
 import { useFormContext } from "react-hook-form"
-
-// // 1. Importa el tipo temporal que creaste en la vista
-// type FormFieldsTemporal = {
-//     type: "income" | "expense"
-//     date: string
-//     amount: number
-//     description: string
-//     incomeAccountId?: string
-//     expenseAccountId?: string
-// }
+import { MOVEMENT_TYPES } from "@/constants/movementTypes"
 
 export default function MovementForm() {
-    // 💡 Sintonizamos la frecuencia del FormProvider padre
-    const { register, formState: { errors } } = useFormContext<MovementFormInputs>()
 
-    //console.log("🔍 Errores actuales del formulario:", errors.amount) // Debug para ver errores en tiempo real
+    const { register, formState: { errors } } = useFormContext<MovementFormInputs>()
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -30,11 +19,10 @@ export default function MovementForm() {
                     {...register("type")} // 👈 Conectamos con RHF
                     className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150"
                 >
-                    <option value="INCOME">Ingreso</option>
-                    <option value="EXPENSE">Gasto</option>
-                    <option value="TRANSFER">Transferencia</option>
-                    <option value="DEPOSIT">Depósito</option>
-                    <option value="WITHDRAWAL">Retiro</option>
+                    <option value="">-- Seleccionar --</option>
+                    {Object.entries(MOVEMENT_TYPES).map(([value, config]) => (
+                        <option key={value} value={value}>{config.label}</option>
+                    ))}
                 </select>
             </div>
 
