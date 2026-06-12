@@ -1,22 +1,14 @@
 // src/components/movements/MovementForm.tsx
 import type { MovementFormInputs } from "@/types"
 import { useFormContext } from "react-hook-form"
-
-// // 1. Importa el tipo temporal que creaste en la vista
-// type FormFieldsTemporal = {
-//     type: "income" | "expense"
-//     date: string
-//     amount: number
-//     description: string
-//     incomeAccountId?: string
-//     expenseAccountId?: string
-// }
+import { MOVEMENT_TYPES } from "@/constants/movementTypes"
+import { useAccounts } from "@/hooks/useAccounts"
 
 export default function MovementForm() {
-    // 💡 Sintonizamos la frecuencia del FormProvider padre
+
     const { register, formState: { errors } } = useFormContext<MovementFormInputs>()
 
-    //console.log("🔍 Errores actuales del formulario:", errors.amount) // Debug para ver errores en tiempo real
+    const { data, isLoading, isError, errorMessage } = useAccounts()
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -30,11 +22,10 @@ export default function MovementForm() {
                     {...register("type")} // 👈 Conectamos con RHF
                     className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150"
                 >
-                    <option value="INCOME">Ingreso</option>
-                    <option value="EXPENSE">Gasto</option>
-                    <option value="TRANSFER">Transferencia</option>
-                    <option value="DEPOSIT">Depósito</option>
-                    <option value="WITHDRAWAL">Retiro</option>
+                    <option value="">-- Seleccionar --</option>
+                    {Object.entries(MOVEMENT_TYPES).map(([value, config]) => (
+                        <option key={value} value={value}>{config.label}</option>
+                    ))}
                 </select>
             </div>
 
@@ -83,9 +74,9 @@ export default function MovementForm() {
                     className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150"
                 >
                     <option value="">-- Seleccionar --</option>
-                    <option value="1524ec1f-cccf-4c50-ad8a-efa1d6b17c12">MERCADOPAGO</option>
-                    <option value="6f91e748-0c5a-42d3-a011-1139ef16854e">BBVA</option>
-                    <option value="0b4643a4-c544-4a34-83b8-122f84c72dca">CASH</option>
+                    {data?.map(account => (
+                        <option key={account.id} value={account.id}>{account.name}</option>
+                    ))}
                 </select>
             </div>
 
@@ -96,9 +87,9 @@ export default function MovementForm() {
                     className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150"
                 >
                     <option value="">-- Seleccionar --</option>
-                    <option value="1524ec1f-cccf-4c50-ad8a-efa1d6b17c12">MERCADOPAGO</option>
-                    <option value="6f91e748-0c5a-42d3-a011-1139ef16854e">BBVA</option>
-                    <option value="0b4643a4-c544-4a34-83b8-122f84c72dca">EFECTIVO</option>
+                    {data?.map(account => (
+                        <option key={account.id} value={account.id}>{account.name}</option>
+                    ))}
                 </select>
             </div>
 

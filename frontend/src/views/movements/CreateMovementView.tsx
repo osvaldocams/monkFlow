@@ -1,6 +1,6 @@
 import { useForm, FormProvider } from "react-hook-form"
 import MovementForm from "@/components/movements/MovementForm"
-import { movementFormSchema, type CreateMovementDto, type MovementFormInputs } from "@/types"
+import { movementFormSchema, type CreateMovementDto, type MovementFormInputs, type MovementType } from "@/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useCreateMovement } from "@/hooks/useMovements"
 
@@ -9,7 +9,7 @@ export default function CreateMovementView() {
     const methods = useForm<MovementFormInputs>({
         resolver: zodResolver(movementFormSchema), // Conectamos el esquema de Zod para validación
         defaultValues: {
-            type: "INCOME",
+            type: "" as MovementType, // Valor inicial vacío para forzar selección
             date: new Date().toISOString().split('T')[0], // Fecha de hoy por defecto
             amount: 0,
             description: ""
