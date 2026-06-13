@@ -179,3 +179,84 @@ export default function MovementForm() {
 </details>
 
 ---
+
+### 🛠️ Sub-parte 3: Orquestación de Limpieza de Estado (Efecto de Cambio de Opinión)
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 13/06/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+En esta sesión se implementó la capa defensiva de saneamiento de memoria en el cliente. Una vez asegurados los filtros específicos de catálogos en la Sub-parte 2, surgía el riesgo de "persistencia de datos fantasma": si un usuario parametrizaba cuentas válidas para un flujo específico (por ejemplo, cuentas tipo `BANK` y `CASH` para un `DEPOSIT`) y posteriormente cambiaba de opinión hacia otro tipo de transacción (como `WITHDRAWAL` o `TRANSFER`), los identificadores de cuenta previos se mantenían retenidos en el estado interno de React Hook Form, provocando cargas de datos corruptas o inconsistentes con las reglas de negocio del backend.
+
+**Decisión de Arquitectura Táctica:** Se determinó el uso del hook `useEffect` en sincronía con el método de escritura programática `setValue` de React Hook Form. En lugar de ramificar la lógica en validaciones condicionales complejas e individuales por cada tipo de movimiento, se optó por una política de **Saneamiento Absoluto**. Cada vez que la variable reactiva `movementType` (monitoreada por `useWatch`) experimenta una mutación de valor, el efecto interrumpe el ciclo y purga inmediatamente las llaves `incomeAccountId` y `expenseAccountId` regresándolas a un estado de cadena vacía (`""`). Esto asegura que la mesa de trabajo se limpie de forma transparente, obligando al usuario a realizar una selección consciente y alineada a los nuevos catálogos disponibles.
+
+**Steps & Commands:**
+
+1. Aprovechando que ya tenemos el useWatch para incomeAccountId y expenseAccountId la idea es reiniciar su valor cada que haya cambios en movementType, la desición técnica es usar el hook useEffect y setear nuevos valores con setValue de RHF
+```tsx
+// src/components/movements/MovementForm.tsx
+import type { MovementFormInputs } from "@/types"
+import { useFormContext, useWatch } from "react-hook-form"
+import { MOVEMENT_TYPES } from "@/constants/movementTypes"
+import { useAccounts } from "@/hooks/useAccounts"
+import { useEffect, useMemo } from "react"
+
+export default function MovementForm() {
+
+    //1️⃣​ EXTRAEMOS SETVALUE
+    const { register, control, setValue, formState: { errors } } = useFormContext<MovementFormInputs>()
+
+    const [movementType, selectedExpenseAccount, selectedIncomeAccount] = useWatch({ 
+        control,
+        name: ["type", "expenseAccountId", "incomeAccountId"]
+    })
+
+
+    const { data, isLoading, isError, errorMessage } = useAccounts()
+
+    //​​reglas de negocios para filtro de cuentas según tipo de movimiento
+    const { incomeAccounts, expenseAccounts} = useMemo(() => {
+        let incomeBase = data || []
+        let expenseBase = data || []
+
+        if(movementType === 'DEPOSIT'){
+            incomeBase = data.filter(account => account.kind === 'BANK')
+            expenseBase = data.filter(account => account.kind === 'CASH')
+        }
+        if(movementType === 'WITHDRAWAL'){
+            incomeBase = data.filter(account => account.kind === 'CASH')
+            expenseBase = data.filter(account => account.kind === 'BANK')
+        }
+        if(movementType === 'TRANSFER'){
+            incomeBase = data.filter(account => account.kind === 'BANK')
+            expenseBase = data.filter(account => account.kind === 'BANK')
+            //VALIDACIÓN CRUZADA: Filtramos para que no se repitan
+            if(selectedExpenseAccount){
+                incomeBase = incomeBase.filter(account => account.id !== selectedExpenseAccount)
+            }
+            if(selectedIncomeAccount){
+                expenseBase = expenseBase.filter(account => account.id !== selectedIncomeAccount)
+            }
+        }
+        return {
+            incomeAccounts: incomeBase,
+            expenseAccounts: expenseBase
+        }
+    }, [data, movementType, selectedExpenseAccount, selectedIncomeAccount])
+
+    //2️⃣​ Guardián de Limpieza: Purga total ante el efecto "Cambio de Opinión"
+    useEffect(() => {
+        setValue("incomeAccountId", "")
+        setValue("expenseAccountId", "")
+    }, [movementType, setValue])
+
+    return (
+        resto...
+    )
+```
+
+</details>
+
+---

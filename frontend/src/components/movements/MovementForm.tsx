@@ -3,22 +3,21 @@ import type { MovementFormInputs } from "@/types"
 import { useFormContext, useWatch } from "react-hook-form"
 import { MOVEMENT_TYPES } from "@/constants/movementTypes"
 import { useAccounts } from "@/hooks/useAccounts"
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 
 export default function MovementForm() {
 
-    const { register, control, formState: { errors } } = useFormContext<MovementFormInputs>()
+    const { register, control, setValue, formState: { errors } } = useFormContext<MovementFormInputs>()
 
     const [movementType, selectedExpenseAccount, selectedIncomeAccount] = useWatch({ 
         control,
-        name: ["type", "expenseAccountId", "incomeAccountId"] //1️⃣NUESTRO USEwATCH AHORA ES UN ARRAY DE VALORES QUE QUEREMOS MONITOREAR
+        name: ["type", "expenseAccountId", "incomeAccountId"]
     })
 
 
     const { data, isLoading, isError, errorMessage } = useAccounts()
 
-    //​2️⃣​reglas de negocios para filtro de cuentas según tipo de movimiento
-    // USAREMOS USEMEMO PARA MEMORIZAR LOS RESULTADOS Y EVITAR CÁLCULOS INNECESARIOS EN CADA RENDERIZADO, SOLO SE REEJECUTARÁ CUANDO CAMBIE EL ARRAY DE CUENTAS O EL TIPO DE MOVIMIENTO
+    //​​reglas de negocios para filtro de cuentas según tipo de movimiento
     const { incomeAccounts, expenseAccounts} = useMemo(() => {
         let incomeBase = data || []
         let expenseBase = data || []
@@ -34,23 +33,25 @@ export default function MovementForm() {
         if(movementType === 'TRANSFER'){
             incomeBase = data.filter(account => account.kind === 'BANK')
             expenseBase = data.filter(account => account.kind === 'BANK')
-            // 3️⃣​ VALIDACIÓN CRUZADA: Filtramos para que no se repitan
+            //VALIDACIÓN CRUZADA: Filtramos para que no se repitan
             if(selectedExpenseAccount){
-                //​👇​ En la de ingreso (destino), quitamos la que ya se eligió en egreso (origen)
                 incomeBase = incomeBase.filter(account => account.id !== selectedExpenseAccount)
             }
             if(selectedIncomeAccount){
-                // ​👇​En la de egreso (origen), quitamos la que ya se eligió en ingreso (destino)
                 expenseBase = expenseBase.filter(account => account.id !== selectedIncomeAccount)
             }
         }
-        return { //4️⃣​ Devolvemos ambos arrays filtrados para usarlos en los selects
+        return {
             incomeAccounts: incomeBase,
             expenseAccounts: expenseBase
         }
+    }, [data, movementType, selectedExpenseAccount, selectedIncomeAccount])
 
-    }, [data, movementType, selectedExpenseAccount, selectedIncomeAccount]) //​5️⃣​Dependencias: se recalcula cada vez que cambian las cuentas o el tipo de movimiento
-
+    useEffect(() => {
+        // Si el tipo de movimiento cambia, reseteamos las cuentas seleccionadas para evitar inconsistencias
+        setValue("incomeAccountId", "")
+        setValue("expenseAccountId", "")
+    }, [movementType, setValue])
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
