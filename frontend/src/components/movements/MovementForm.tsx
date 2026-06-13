@@ -1,12 +1,14 @@
 // src/components/movements/MovementForm.tsx
 import type { MovementFormInputs } from "@/types"
-import { useFormContext } from "react-hook-form"
+import { useFormContext, useWatch } from "react-hook-form"
 import { MOVEMENT_TYPES } from "@/constants/movementTypes"
 import { useAccounts } from "@/hooks/useAccounts"
 
 export default function MovementForm() {
 
-    const { register, formState: { errors } } = useFormContext<MovementFormInputs>()
+    const { register, control, formState: { errors } } = useFormContext<MovementFormInputs>()
+
+    const movementType = useWatch({control,name: "type"})
 
     const { data, isLoading, isError, errorMessage } = useAccounts()
 
@@ -45,6 +47,7 @@ export default function MovementForm() {
                         type="date" 
                         {...register("date", { required: "La fecha es obligatoria" })} // 👈 Validación básica nativa
                         className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150" 
+                        disabled={!movementType}
                     />
                     {errors.date && <p className="text-red-500 text-xs mt-1">{String(errors.date.message)}</p>}
                 </div>
@@ -61,6 +64,7 @@ export default function MovementForm() {
                             min: { value: 0.01, message: "El monto debe ser mayor a cero" }
                         })} 
                         className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150" 
+                        disabled={!movementType}
                     />
                     {errors.amount?.message && (<p className="text-red-500 text-xs font-semibold mt-1">{errors.amount.message}</p>)}
                 </div>
@@ -70,6 +74,7 @@ export default function MovementForm() {
             <div>
                 <label className="block text-sm font-medium text-obsidian mb-2">Cuenta Ingreso</label>
                 <select 
+                    disabled={!movementType}
                     {...register("incomeAccountId")}
                     className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150"
                 >
@@ -85,6 +90,7 @@ export default function MovementForm() {
                 <select 
                     {...register("expenseAccountId")}
                     className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150"
+                    disabled={!movementType}
                 >
                     <option value="">-- Seleccionar --</option>
                     {data?.map(account => (
@@ -100,6 +106,7 @@ export default function MovementForm() {
                     placeholder="Detalles del movimiento (Ej: Pago de renta, Venta freelance)." 
                     {...register("description", { maxLength: { value: 200, message: "Máximo 200 caracteres" } })}
                     className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150" 
+                    disabled={!movementType}
                 />
                 {errors.description && <p className="text-red-500 text-xs mt-1">{String(errors.description.message)}</p>}
             </div>
