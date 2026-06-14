@@ -7,16 +7,19 @@ import { useCreateMovement } from "@/hooks/useMovements"
 export default function CreateMovementView() {
     //1 Inicializamos la central de React Hook Form
     const methods = useForm<MovementFormInputs>({
-        resolver: zodResolver(movementFormSchema), // Conectamos el esquema de Zod para validación
+        resolver: zodResolver(movementFormSchema), 
+        mode: "onChange", 
         defaultValues: {
-            type: "" as MovementType, // Valor inicial vacío para forzar selección
-            date: new Date().toISOString().split('T')[0], // Fecha de hoy por defecto
+            type: "" as MovementType, 
+            date: new Date().toISOString().split('T')[0], 
             amount: 0,
             description: ""
         }
     })
 
     const createMovementMutation = useCreateMovement()
+    const { isValid } = methods.formState
+    const { isPending } = createMovementMutation
     
     const onSubmit = (data: MovementFormInputs) => {
     try {
@@ -46,8 +49,8 @@ export default function CreateMovementView() {
 
                     <button 
                         type="submit" 
-                        className="w-full border bg-sage text-black py-2 px-4 rounded-md font-medium hover:bg-opacity-90 transition-colors"
-                        disabled={createMovementMutation.isPending}
+                        className={`w-full border bg-gray-400 text-black py-2 px-4 rounded-md font-medium hover:bg-opacity-60 transition-colors ${(!isValid || isPending) ? "cursor-not-allowed opacity-50" : "hover:bg-gray-500"}`}
+                        disabled={!isValid || isPending}
                         >
                         {createMovementMutation.isPending ? "Creando..." : "Crear Movimiento"}
                     </button>
