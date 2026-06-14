@@ -19,20 +19,22 @@ export default function MovementForm() {
 
     //​​reglas de negocios para filtro de cuentas según tipo de movimiento
     const { incomeAccounts, expenseAccounts} = useMemo(() => {
-        let incomeBase = data || []
-        let expenseBase = data || []
+        const baseData = data ?? []
+
+        let incomeBase = baseData
+        let expenseBase = baseData
 
         if(movementType === 'DEPOSIT'){
-            incomeBase = data.filter(account => account.kind === 'BANK')
-            expenseBase = data.filter(account => account.kind === 'CASH')
+            incomeBase = baseData.filter(account => account.kind === 'BANK')
+            expenseBase = baseData.filter(account => account.kind === 'CASH')
         }
         if(movementType === 'WITHDRAWAL'){
-            incomeBase = data.filter(account => account.kind === 'CASH')
-            expenseBase = data.filter(account => account.kind === 'BANK')
+            incomeBase = baseData.filter(account => account.kind === 'CASH')
+            expenseBase = baseData.filter(account => account.kind === 'BANK')
         }
         if(movementType === 'TRANSFER'){
-            incomeBase = data.filter(account => account.kind === 'BANK')
-            expenseBase = data.filter(account => account.kind === 'BANK')
+            incomeBase = baseData.filter(account => account.kind === 'BANK')
+            expenseBase = baseData.filter(account => account.kind === 'BANK')
             //VALIDACIÓN CRUZADA: Filtramos para que no se repitan
             if(selectedExpenseAccount){
                 incomeBase = incomeBase.filter(account => account.id !== selectedExpenseAccount)
