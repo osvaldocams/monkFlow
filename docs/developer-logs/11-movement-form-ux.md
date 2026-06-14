@@ -260,3 +260,110 @@ export default function MovementForm() {
 </details>
 
 ---
+
+### 🛠️ Sub-parte 4: Control del Botón de Envío y Estados de Validación Estricta
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 13/06/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+En esta sesión de cierre de fase, se consolidó la arquitectura defensiva del formulario en la vista padre, resolviendo fricciones críticas de tipado estructural en el cliente y saneando inconsistencias de datos asíncronos provenientes del backend.
+
+Decisiones de Sincronización Global y Arquitectura de Tipos:
+
+1. Validación Proactiva via mode: "onChange": Se configuró la escucha activa en cada cambio de input. Esto permite que el esquema de Zod reevalúe el estado en milisegundos, habilitando o bloqueando el botón de envío de forma nativa mediante las banderas combinadas isValid (síncrona) e isPending (asíncrona).
+
+2. Aislamiento de Contratos (Entrada vs. Salida): Se identificó un conflicto en la firma del método onSubmit. React Hook Form opera estrictamente sobre los tipos de captura del formulario (MovementFormInputs), mientras que el hook de mutación de Axios exige el formato de persistencia refinado (CreateMovementDto). En lugar de recurrir a técnicas de evasión de tipado (as any), se implementó un flujo transparente donde onSubmit recibe de forma nativa los tipos de entrada y los procesa explícitamente a través del método .parse() del esquema mutador, garantizando la inyección de datos sanitizados hacia la API.
+
+3. Saneamiento del Schema de Respuestas (Resolución de bug NaN): Durante las pruebas en entorno de desarrollo (localhost:5173), se detectó un bloqueo de ejecución en el método getMovements. El análisis del controlador de Prisma reveló que la consulta omitía deliberadamente el campo balance en las relaciones de cuenta. Al intentar coaccionar una propiedad inexistente (undefined), el cliente generaba un valor indeterminado (NaN), rompiendo las restricciones del esquema. Se resolvió alineando estructuralmente el accountSchema en el frontend para prescindir del balance en las lecturas de movimientos, acoplando la interfaz a la realidad de la base de datos.
+
+**Steps & Commands:**
+
+1. Orquestación del Formulario y el Guardián del Submit `src/views/movements/CreateMovementView.tsx`
+```tsx
+import { useForm, FormProvider } from "react-hook-form"
+import MovementForm from "@/components/movements/MovementForm"
+import { movementFormSchema, createMovementApiSchema, type CreateMovementDto, type MovementFormInputs, type MovementType } from "@/types"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useCreateMovement } from "@/hooks/useMovements"
+
+export default function CreateMovementView() {
+    // 1️⃣ Inicialización del estado con tipado nativo de entrada
+    const methods = useForm<MovementFormInputs>({
+        resolver: zodResolver(movementFormSchema), 
+        mode: "onChange", 
+        defaultValues: {
+            type: "" as MovementType, 
+            date: new Date().toISOString().split('T')[0], 
+            amount: 0,
+            description: ""
+        }
+    })
+
+    const createMovementMutation = useCreateMovement()
+    const { isValid } = methods.formState
+    const { isPending } = createMovementMutation
+    
+    // 2️⃣ Puente de Transformación: Conversión limpia de Entrada (Inputs) a Salida (DTO)
+    const onSubmit = (data: MovementFormInputs) => {
+        try {
+            // Saneamos strings vacíos a undefined mediante la aduana de transformación de Zod
+            const cleanData = createMovementApiSchema.parse(data)
+            console.log("🚀 Payload sanitizado listo para Axios:", cleanData)
+            
+            createMovementMutation.mutate(cleanData)
+        } catch (error) {
+            console.error("⚠️ Error crítico en la transformación de datos:", error)
+        }
+    }
+
+    return (
+        <div className="max-w-3xl mx-auto p-6">
+            <h1 className="text-2xl font-bold text-obsidian mb-6">Crear Nuevo Movimiento</h1>
+
+            <FormProvider {...methods}>
+                <form 
+                    noValidate
+                    onSubmit={methods.handleSubmit(onSubmit)} 
+                    className="space-y-6 bg-white p-6 rounded-lg border border-stone-200"
+                >
+                    <MovementForm /> 
+
+                    <button 
+                        type="submit" 
+                        className={`w-full border bg-gray-400 text-black py-2 px-4 rounded-md font-medium hover:bg-opacity-60 transition-colors ${(!isValid || isPending) ? "cursor-not-allowed opacity-50" : "hover:bg-gray-500"}`}
+                        disabled={!isValid || isPending} 
+                    >
+                        {isPending ? "Creando..." : "Crear Movimiento"}
+                    </button>
+
+                    {/* Panel de Depuración de Errores */}
+                    {Object.keys(methods.formState.errors).length > 0 && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                            <p className="font-semibold mb-2">Errores en el formulario:</p>
+                            <ul className="list-disc list-inside">
+                                {Object.entries(methods.formState.errors).map(([field, error]) => (
+                                    <li key={field}>{field}: {error?.message}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </form>
+            </FormProvider>
+        </div>
+    )
+}
+```
+2. Refactor Saneador del Esquema Core de Cuentas `src/types/index.ts` eliminamos la propiedad balance para sincronizar las respuestas del backend que carecen de dicha proyección en Prisma:
+```tsx
+export const accountSchema = z.object({
+    id: z.string().uuid("El ID de la cuenta debe ser un UUID válido"),
+    name: z.string().min(1, "El nombre de la cuenta es obligatorio"),
+    kind: accountTypeSchema
+    // 💡 Saneado: Se remueve el balance para evitar falsas coerciones de NaN en peticiones colectivas (GET)
+})
+```
+
+</details>

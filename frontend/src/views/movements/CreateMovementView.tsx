@@ -1,6 +1,6 @@
 import { useForm, FormProvider } from "react-hook-form"
 import MovementForm from "@/components/movements/MovementForm"
-import { movementFormSchema, type CreateMovementDto, type MovementFormInputs, type MovementType } from "@/types"
+import { movementFormSchema, type MovementFormInputs, type MovementType } from "@/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useCreateMovement } from "@/hooks/useMovements"
 
@@ -18,11 +18,18 @@ export default function CreateMovementView() {
 
     const createMovementMutation = useCreateMovement()
     
-    //2 Función que se ejecuta SOLO si todas las validaciones pasan
-    const onSubmit = (data: CreateMovementDto) => {
-        console.log("🚀 Datos validados listos para enviar al backend:", data)
-        createMovementMutation.mutate(data)
+    const onSubmit = (data: MovementFormInputs) => {
+    try {
+        // 🧼 Pasamos los datos por la aduana de transformación de Zod.
+        // Esto convierte los "" a 'undefined' y te devuelve un 'CreateMovementDto' real.
+        const cleanData = movementFormSchema.parse(data)
+        console.log("🚀 Datos limpios listos para Axios:", cleanData)
+        //Ahora la mutación recibe exactamente el DTO que estaba esperando
+        createMovementMutation.mutate(cleanData)
+    } catch (error) {
+        console.error("Error en la transformación de datos", error)
     }
+}
     return (
         <div className="max-w-3xl mx-auto p-6">
             <h1 className="text-2xl font-bold text-obsidian mb-6">Crear Nuevo Movimiento</h1>
