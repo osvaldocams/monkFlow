@@ -1,28 +1,38 @@
 import { useForm, FormProvider } from "react-hook-form"
 import MovementForm from "@/components/movements/MovementForm"
-import { movementFormSchema, type CreateMovementDto, type MovementFormInputs, type MovementType } from "@/types"
+import { movementFormSchema, type MovementFormInputs, type MovementType } from "@/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useCreateMovement } from "@/hooks/useMovements"
 
 export default function CreateMovementView() {
     //1 Inicializamos la central de React Hook Form
     const methods = useForm<MovementFormInputs>({
-        resolver: zodResolver(movementFormSchema), // Conectamos el esquema de Zod para validación
+        resolver: zodResolver(movementFormSchema), 
+        mode: "onChange", 
         defaultValues: {
-            type: "" as MovementType, // Valor inicial vacío para forzar selección
-            date: new Date().toISOString().split('T')[0], // Fecha de hoy por defecto
+            type: "" as MovementType, 
+            date: new Date().toISOString().split('T')[0], 
             amount: 0,
             description: ""
         }
     })
 
     const createMovementMutation = useCreateMovement()
+    const { isValid } = methods.formState
+    const { isPending } = createMovementMutation
     
-    //2 Función que se ejecuta SOLO si todas las validaciones pasan
-    const onSubmit = (data: CreateMovementDto) => {
-        console.log("🚀 Datos validados listos para enviar al backend:", data)
-        createMovementMutation.mutate(data)
+    const onSubmit = (data: MovementFormInputs) => {
+    try {
+        // 🧼 Pasamos los datos por la aduana de transformación de Zod.
+        // Esto convierte los "" a 'undefined' y te devuelve un 'CreateMovementDto' real.
+        const cleanData = movementFormSchema.parse(data)
+        console.log("🚀 Datos limpios listos para Axios:", cleanData)
+        //Ahora la mutación recibe exactamente el DTO que estaba esperando
+        createMovementMutation.mutate(cleanData)
+    } catch (error) {
+        console.error("Error en la transformación de datos", error)
     }
+}
     return (
         <div className="max-w-3xl mx-auto p-6">
             <h1 className="text-2xl font-bold text-obsidian mb-6">Crear Nuevo Movimiento</h1>
@@ -39,8 +49,8 @@ export default function CreateMovementView() {
 
                     <button 
                         type="submit" 
-                        className="w-full border bg-sage text-black py-2 px-4 rounded-md font-medium hover:bg-opacity-90 transition-colors"
-                        disabled={createMovementMutation.isPending}
+                        className={`w-full border bg-gray-400 text-black py-2 px-4 rounded-md font-medium hover:bg-opacity-60 transition-colors ${(!isValid || isPending) ? "cursor-not-allowed opacity-50" : "hover:bg-gray-500"}`}
+                        disabled={!isValid || isPending}
                         >
                         {createMovementMutation.isPending ? "Creando..." : "Crear Movimiento"}
                     </button>
