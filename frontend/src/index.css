@@ -1,1 +1,28 @@
 @import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Outfit:wght@100..900&family=PT+Sans:wght@400;700&display=swap');
+
+
+@theme {
+  /* COLORS */
+    /*primary*/
+    --color-obsidian: #2d3436; 
+    --color-linen-light: #f7f7f7;
+    --color-sage: #a3c9a8;
+    --color-sage-opaque: rgba(163, 201, 168, 0.3);
+    /*secondary*/
+    --color-clay-gray: #b2b8b8;
+    --color-clay-gray-opaque: rgba(178, 184, 184, 0.1);
+
+    --color-ritual-red: #d00000;
+    --color-ritual-red-opaque: rgba(208, 0, 0, 0.1);
+
+    --color-green-balance: #6a994e;
+    --color-green-balance-opaque: rgba(106, 153, 78, 0.1);
+    
+    --color-rice-paper: #e9edc9;
+    --color-rice-paper-opaque: rgba(233, 237, 201, 0.1);
+
+    /* FONT FAMILIES */
+    --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
