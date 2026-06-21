@@ -18,9 +18,10 @@ export default function Router() {
         <QueryClientProvider client={queryClient}>
             <BrowserRouter>
                 <Routes>
-                    <Route element={<AppLayout />} />
+                    <Route element={<AppLayout />}>
                         <Route path="/" element={<DashboardView/>} index />
                         <Route path="/movements/create" element={<CreateMovementView />} />
+                    </Route>
                 </Routes>
             </BrowserRouter>
         </QueryClientProvider>
