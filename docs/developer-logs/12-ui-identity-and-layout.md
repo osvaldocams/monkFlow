@@ -78,55 +78,84 @@ En esta sesión de apertura de la Fase 12, se establecieron los cimientos visual
 <details>
 
 *   **Status:** ✅ Completed
-*   **Timestamp:** 17/06/2026
+*   **Timestamp:** 16/07/2026
 
 #### 📝 Crónica de la Sesión & Decisiones Técnicas
-En esta sesión se inauguró el desarrollo del contenedor maestro de la aplicación (`AppLayout.tsx`). Ante la complejidad técnica que representa estructurar un entorno de Dashboard responsivo desde cero, se optó por una estrategia de desarrollo modular incremental. El esfuerzo de este sprint se concentró exclusivamente en el diseño, maquetación y tokenización del **Header (Barra Superior)**, postergando la barra de navegación lateral y los estados interactivos para sub-fases posteriores con el fin de mitigar el desorden visual y de código.
+En esta sesión se culminó exitosamente el diseño y maquetación de la estructura maestra de la aplicación (AppLayout.tsx). El layout ahora responde con total fluidez en dispositivos móviles y de escritorio gracias a un enfoque de diseño responsivo nativo, utilizando el sistema de ocultación/visualización condicional de Tailwind.
 
 **Decisiones de Diseño y Configuración del Tema:**
-1. **Adopción de Iconografía Atómica (`lucide-react`):** Se integró la librería Lucide mediante `pnpm` para proveer un set de vectores consistente, ligero y estilizable mediante clases nativas de Tailwind (ej. `h-5 w-5`), eliminando el uso de imágenes o SVGs duros en el marcado.
-2. **Posicionamiento Persistente (`sticky top-0`):** Se definió que el Header actúe como un elemento anclado en la parte superior del viewport de la pantalla mediante `sticky`, asegurando un índice de capa seguro (`z-30`) para que las tarjetas de balance o datos que hagan scroll pasen por debajo de forma orgánica sin romper la jerarquía visual.
-3. **Inyección de la Identidad Zen:** Se aplicaron por primera vez los tokens CSS de Tailwind v4 configurados en la sub-parte anterior:
-   * El fondo del header adoptó `--color-obsidian` (`bg-obsidian`) para dar un contraste de bloque maduro.
-   * Los acentos de botones e iconos secundarios se mapearon con el verde `--color-sage` (`text-sage`).
-   * Las interacciones destructivas (como el botón de cierre de sesión) incorporaron transiciones suaves (`transition-colors`) mutando al rojo `--color-ritual-red` únicamente durante el estado de `hover`.
-4. **Preparación de la Rejilla Móvil:** Se incluyeron de forma estática los vectores de menú hamburguesa (`Menu`) y cierre (`X`) bajo utilidades adaptativas (`lg:hidden`), dejando la infraestructura lista para la lógica de estados que controlará el cajón de navegación lateral (*Sidebar Drawer*) en dispositivos móviles.
+Decisiones de Diseño y Solución de Retos:
+
+1. Navegación Móvil Adaptativa (Responsive Sidebar Drawer):
+    Se implementó un panel lateral móvil activado reactivamente mediante el estado local sidebarOpen. Para optimizar la experiencia de usuario (UX):
+
+        - Se integró un Overlay (capa de fondo oscura) con un filtro de opacidad sutil (bg-obsidian opacity-40) que se cierra automáticamente con el evento onClick.
+
+        - Se configuró un posicionamiento fijo (fixed inset-y-0 left-0) con una jerarquía de capas alta (z-50) para evitar que colisione con el contenido principal.
+
+2. Corrección de la Inyección de Vistas (<Outlet/>):
+    Se solucionó el desfase del contenedor principal. Ahora, el componente <Outlet/> se renderiza dentro de un bloque semántico <main> que actúa como hermano directo del <aside> de escritorio, ambos envueltos por un contenedor flexible con altura calculada (h-[calc(100vh-4rem)]).
+
+3. Control de Scroll Independiente (overflow-y-auto):
+    Se asignó el scroll nativo de forma individualizada tanto al área de contenido principal como a los paneles de navegación lateral. De esta forma, si la lista de movimientos crece de forma masiva, el Header superior se mantiene siempre estático y pegado al viewport de manera predecible.
+
+4. Implementación Homogénea de Tokens CSS (Tailwind v4):
+    Se terminaron de limpiar y mapear todas las clases de colores de nuestra identidad de diseño:
+
+    - El fondo de las vistas activas se asignó con la variable orgánica clara (bg-linen-light).
+
+    - Los enlaces activos del menú móvil y de escritorio adoptaron la variable verde balance (bg-green-balance text-linen-light).
+
+    -El overlay de cierre adoptó el color negro ceniza (bg-obsidian).
 
 **Steps & Commands:**
 
 1. Trabajaremos con el archivo `src/layouts/AppLayout.tsx` el cual tenemos casi que en blanco, para una mejor documentación de como vamos a contruir dividamos en tareas particulares, primero vamos a construri el header, nos preparamos instalando nuestra biblioteca de iconos lucide-react
-```bash
-cd frontend
-pnpm add lucide-react
-```
 ```tsx
-import { Outlet, Link } from "react-router-dom"
-import { Menu, X, LogOut, User,  } from "lucide-react" //1️⃣ importamos algunos iconos
+import { Outlet, Link, useLocation } from "react-router-dom"
+import { Menu, X, LogOut, User, ArrowDownUp, ChartNoAxesCombined, Settings, LayoutDashboard} from "lucide-react"
+import { useState } from "react"
+
+const navigation = [
+    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Movimientos', href: '/movements', icon: ArrowDownUp },
+    { name: 'Analítico', href: '/analytics', icon: ChartNoAxesCombined },
+    { name: 'Configuración', href: '/settings', icon: Settings }
+]
+
 
 export default function AppLayout() {
+    const [sidebarOpen, setSidebarOpen] = useState(false)
+    const location = useLocation()
+
+    const isActive = (path: string) => location.pathname === path
+
     return (
-        <div className="min-h-screen bg-gray-50 font-inter"> //​2️⃣ un div container general
-            {/* header */} //​3️⃣ iniciamos con el header
+        <div className="min-h-screen bg-gray-50 font-inter">
+            {/* header */}
             <header className="sticky top-0 z-30 bg-obsidian shadow-md">
                 <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 items-center justify-between">
-                        {/* Mobile menu button */} //​4️⃣ creamos un boton para desplegar el menú que aun construiremos estos botones mas adelante se mostraran de forma condicional
+                        {/* Mobile menu button */}
                         <button
                             type="button"
                             className="lg:hidden inline-flex items-center justify-center rounded-md p-2 text-sage hover:bg-clay-gray hover:text-linen-light focus:outline-none focus:ring-2 focus:ring-inset focus:ring-linen-light"
-                            onClick={() => {}}
+                            onClick={() => setSidebarOpen(!sidebarOpen)}
                         >
                             <span className="sr-only">Abrir menú</span>
+                            {sidebarOpen ? (
                                 <X className="block h-6 w-6" aria-hidden="true" />
+                            ):
                                 <Menu className="block h-6 w-6" aria-hidden="true" />
+                            }
                         </button>
-                        {/* Logo */} //​5️⃣ dejamos un logo provisional
+                        {/* Logo */}
                         <Link to="/" className="flex items-center">
                             <div className="text-linen-light text-xl sm:text-2xl font-bold">
                                 💰 MonkFlow
                             </div>
                         </Link>
-                        {/* user menu */} //​6️⃣​ creamos el user menu
+                        {/* user menu */}
                         <div className="flex items-center gap-3">
                             <button className="hidden sm:flex items-center gap-2 rounded-lg border border-clay-gray bg-obsidian px-3 py-2 text-sm font-medium nth-2:text-linen-light nth-1:text-sage nth-1:hover:text-linen-light hover:bg-clay-gray transition-colors">
                                 <User className="h-4 w-4 " />
@@ -140,16 +169,139 @@ export default function AppLayout() {
                     </div>
                 </div>
             </header>
+
+            <div className="flex h-[calc(100vh-4rem)]">
+            {/* sidebar desktop */}
+                <aside className="hidden lg:flex shrink-0">
+                    <div className="flex w-64 flex-col bg-sage">
+                        <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
+                            <nav className="flex-1 space-y-1 px-3">
+                                {navigation.map((item)=>{
+                                    const Icon = item.icon
+                                    const active = isActive(item.href)
+                                    return(
+                                        <Link
+                                            key={item.name}
+                                            to={item.href}
+                                            className={`
+                                                group flex items-center rounded-lg px-3 py-2.5 text-md font-medium transition-colors
+                                                ${active ? 'bg-green-balance text-linen-light' : 'text-obsidian hover:bg-clay-gray'}
+                                            `}
+                                        >
+                                            <Icon
+                                                className={`mr-3 h-5 w-5 shrink-0 `}
+                                            />
+                                            {item.name}
+                                        </Link>
+                                    )
+                                })}
+                            </nav>
+                            {/* footer */}
+                            <div className="flex shrink-0 border-t border-green-balance p-4">
+                                <button className="group flex w-full items-center">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-9 w-9 rounded-full bg-linen-light flex items-center justify-center">
+                                            <User className="h-5 w-5 text-obsidian" />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="text-sm font-medium text-obsidian">Usuario</p>
+                                            <p className="text-xs text-obsidian">Ver perfil</p>
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                {/* Sidebar Mobile */}
+                {sidebarOpen && (
+                    <div className="lg:hidden">
+                        {/* overlay */}
+                        <div 
+                            className="fixed inset-0 z-40 bg-obsidian opacity-40"
+                            onClick={() => setSidebarOpen(false)}
+                        >
+                        </div>
+                        {/* sidebar (mobile) panel */}
+                        <div className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sage">
+                            <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
+                                {/* close button */}
+                                <div className="flex items-center justify-between px-4 mb-8">
+                                    <span className="text-lg font-bold text-obsidian">💰 MonkFlow</span>
+                                    <button
+                                        type="button"
+                                        className="rounded-md text-obsidian hover:text-linen-light"
+                                        onClick={() => setSidebarOpen(false)}
+                                    >
+                                        <X className="h-6 w-6" aria-hidden="true" />
+                                    </button>
+                                </div>
+
+                                {/* navigation (mobile)*/}
+                                <nav className="flex-1 space-y-1 px-3">
+                                    {navigation.map((item) => {
+                                        const Icon = item.icon
+                                        const active = isActive(item.href)
+                                        return (
+                                            <Link
+                                                key={item.name}
+                                                to={item.href}
+                                                className={`
+                                                    group flex items-center rounded-lg px-3 py-2.5 text-md font-medium transition-colors
+                                                    ${active 
+                                                        ? 'bg-green-balance text-linen-light' 
+                                                        : 'text-obsidian hover:bg-linen-light'
+                                                    }
+                                                `}
+                                            >
+                                                <Icon
+                                                    className={`mr-3 h-5 w-5 shrink-0 ${
+                                                        active ? 'text-linen-light' : 'text-obsidian group-hover:text-obsidian'
+                                                    }`}
+                                                />
+                                                {item.name}
+                                            </Link>
+                                        )
+                                    })}
+                                </nav>
+
+                                {/* user section (mobile) */}
+                                <div className="flex shrink-0 border-t border-linen-light p-4">
+                                    <button className="group flex w-full items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-linen-light flex items-center justify-center">
+                                            <User className="h-5 w-5 text-obsidian" />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="text-sm font-medium text-obsidian">Mi cuenta</p>
+                                            <p className="text-xs text-obsidian">Ver perfil</p>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Main content */}
+                <main className="flex-1 overflow-y-auto bg-linen-light">
+                    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+                        <Outlet />
+                    </div>
+                </main>
+            </div>
+
+            {/* footer (visible only on large screens) */}
+            <footer className="hidden lg:block border-t border-clay-gray bg-linen-light">
+                <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+                    <p className="text-center text-sm text-obsidian">
+                        © {new Date().getFullYear()} MonkFlow. Todos los derechos reservados.
+                    </p>
+                </div>
+            </footer>
         </div>
     )
 }
 ```
 
 </details>
-
----
-1. 
-
-</details>
-
----
