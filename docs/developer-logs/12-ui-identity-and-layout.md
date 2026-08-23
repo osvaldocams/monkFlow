@@ -305,3 +305,354 @@ export default function AppLayout() {
 ```
 
 </details>
+
+---
+### 🛠️ Sub-parte 3: El Centro de Control — MovementsView.tsx (Lista y Tabla)
+
+<details>
+
+*   **Status:** ✅ Completed
+*   **Timestamp:** 17/07/2026
+
+#### 📝 Crónica de la Sesión & Decisiones Técnicas
+En esta sesión se inauguró la construcción de la vista principal del sistema financiero, MovementsView.tsx (el Centro de Control). Tras evaluar la complejidad de visualización de datos numéricos complejos en múltiples formatos de pantalla, se descartó el uso de un contenedor único. En su lugar, se optó por un enfoque adaptativo e híbrido que presenta la información en dos estructuras HTML completamente diferenciadas, gobernadas de forma exclusiva por las utilidades responsivas nativas de Tailwind v4. Esto garantiza la máxima legibilidad de los flujos de caja del usuario sin duplicar la lógica de negocio ni las peticiones al servidor.
+
+
+**Decisiones de Diseño y Solución de Retos:***
+
+1. Diseño de Interfaz Híbrido (Desktop vs. Mobile):
+Se determinó que el formato de Tabla es el óptimo para pantallas de escritorio (lg), ya que permite el escaneo vertical rápido de transacciones, fechas y montos en columnas fijas. Por el contrario, para pantallas móviles se diseñó un flujo de Tarjetas individuales (Cards) que aprovecha el espacio vertical sin forzar un scroll horizontal incómodo para el usuario.
+
+2. Consumo Centralizado de Datos (Monolithic Data Flow):
+A pesar de duplicar el marcado visual (HTML) para móviles y escritorio, la lógica de negocio permanece unificada. Ambos esquemas consumen el mismo array de datos proveniente de la API/React Query en el nivel superior del componente, evitando peticiones de red adicionales o problemas de desincronización del estado de los movimientos. 
+
+3. Control de Visibilidad Nativo con Tailwind v4:
+Se resolvió el cambio de layout de manera puramente declarativa en el cliente mediante las clases hidden lg:block (para la tabla de escritorio) y block lg:hidden (para las tarjetas móviles). Esto delega la renderización y la carga de cálculo responsiva directamente al navegador, logrando transiciones instantáneas y fluidas al redimensionar la pantalla.
+
+4. Consistencia Visual con la Identidad Zen:
+Se proyectó el uso de los tokens de color integrados en fases previas: el verde --color-green-balance para representar los ingresos (inflows) y el rojo --color-ritual-red para destacar los gastos o salidas (outflows), manteniendo una semántica financiera estricta y de alta legibilidad.
+
+
+**Steps & Commands:**
+
+1. Crear el archivo src/views/DashboardView.tsx y estructurar el componente funcional base, crear la ruta en el archivo router
+```md
+**creamos el archivo**
+/src/views/MovementView.tsx
+```
+```tsx
+/*MovementView.tsx*/
+/*de momento solo creamos un componente funcional*/
+
+export default function MovementView() {
+    return (
+        <div>
+            <h1>Movement View</h1>
+        </div>
+    )
+}
+
+```
+```tsx
+/*router.tsx*/
+/*en el archivo router importamos nuestra vista y la añadimos a las rutas*/
+export default function Router() {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+                <Routes>
+                    <Route element={<AppLayout />}>
+                        <Route path="/" element={<DashboardView/>} index />
+                        <Route path="/movements" element={<MovementView/>} />  /*👈​ generamos la ruta*/
+                        <Route path="/movements/create" element={<CreateMovementView />} />
+                    </Route>
+                </Routes>
+            </BrowserRouter>
+        </QueryClientProvider>
+    )
+}
+```
+
+2. crear un componente reutilizable para el heading de la pagina, src/components/ui/PageHeader.tsx, este nos permitira de una forma dinamica añadir a cada pagina un boton de redireccionamiento, un titulo y una descripción
+```tsx
+import { Link } from "react-router-dom"
+
+type PageHeaderProps = {
+    title: string
+    description?: string
+    backTo?: string
+    backLabel?: string
+}
+
+export default function PageHeader({
+    title,
+    description,
+    backTo,
+    backLabel = 'Volver',
+}: PageHeaderProps) {
+    return (
+        <div className="mb-6 sm:mb-8">
+            {/* Back button - Móvil sticky, desktop normal */}
+            {backTo && (
+                <nav className="mb-4 sm:mb-6 -mx-4 sm:mx-0 px-4 sm:px-0 py-3 sm:py-0 bg-white sm:bg-transparent sm:border-0 sticky sm:static top-0 z-10">
+                    <Link
+                        to={backTo}
+                        className=" inline-flex items-center gap-2 text-sm sm:text-base font-medium text-linen-light bg-green-balance p-2 rounded-md hover:text-sage hover:bg-green-balance-opaque transition-colors"
+                    >
+                        <span>{backLabel}</span>
+                    </Link>
+                </nav>
+            )}
+
+            {/* Title and actions */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 truncate">
+                        {title}
+                    </h1>
+                    {description && (
+                        <p className="text-base sm:text-lg lg:text-xl font-light text-gray-600 mt-2 sm:mt-3">
+                            {description}
+                        </p>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}
+```
+
+3. importamos la data de los movimientos del hook donde tenemos el usequery, hacemos las respectivas validaciones con isLoading, error y !data, para entonces retornar el componente, que lleva nuestro PageHeader y un componente nuevo MovementList (pasar data por props) que mostraremos de forma condicional en caso tambien de que no haya movimientos
+```tsx
+import { useMovements } from "@/hooks/useMovements" /*1️⃣ importamos el hook*/
+import PageHeader from "@/components/ui/PageHeader"
+
+export default function MovementView() {
+    const { data, isLoading, isError, errorMessage } = useMovements() /*2️⃣​ ejecutamos extrayendo lo que vamos a necesitar*/
+
+    if(isLoading)return <p>Cargando...</p> /*3️⃣​ creamos validaciones de carga*/
+	if (isError) return <div className="p-6 text-rose-500 font-semibold">🚨 Error: {errorMessage}</div>
+	if(!data) return null
+    return ( /*​4️⃣ una vez pasadas las validaciones carga la vista*/
+        <>
+            <PageHeader 
+                title="Mis Movimientos"
+                description="Crea y Administra tus Movimientos"
+                backTo="/movements/create"
+                backLabel="Crear Movimiento"
+            
+            />
+            {data.length ? (
+                <MovementsList /*5️⃣​ renderizamos movement list comprobando que el arreglo no esté vacío*/
+					movements={data} /*6️⃣​ pasamos los datos de los movimientos */​
+				/>
+            ):(
+                <p className="text-gray-500">No hay movimientos registrados aun</p> /*7️⃣​ mensaje cuando no hay movimientos */
+            )}
+        </>
+    )
+}
+```
+4. ya podemos trabajar el componente por aparte lo primero es que declararemos un interface que nos traera los movimientos de la vista padre, despues declararemos un type para los iconos que nos será de utilidad más adelante
+```ts
+
+    interface MovementsListProps {
+    movements: Movement[]
+    }
+
+
+    const TYPE_ICONS: Record<MovementType, React.ReactNode> = {
+    INCOME: <ArrowDownLeft className="w-3.5 h-3.5" />,
+    EXPENSE: <ArrowUpRight className="w-3.5 h-3.5" />,
+    TRANSFER: <ArrowLeftRight className="w-3.5 h-3.5" />,
+    DEPOSIT: <ArrowDownToLine className="w-3.5 h-3.5" />,
+    WITHDRAWAL: <ArrowUpFromLine className="w-3.5 h-3.5" />,
+    }
+```
+5. ya podemos iniciar escribiendo nuestro componente funcional tsx y la primera parte será un sub header este nos servirá tanto para la version mobile como desktop
+    ```ts
+    export default function MovementsList({ movements }: MovementsListProps) {
+        return (
+            <div className="bg-white rounded-lg shadow-md border border-linen-light">
+
+                {/* HEADER */}
+                <div className="p-5 border-b border-linen-light">
+                    <h3 className="text-xl font-semibold text-obsidian">Movimientos Recientes</h3>
+                </div>
+    ```
+
+6. la siguiente seccion es la parte mobile gracias al codigo tailwind podemos hacer el codigo resposivo desde un contenedor principal el cual no será tomado en cuenta para la version desktop, es importante que vamos a iterar movements para llenar la información
+    ```ts
+
+    {/* MOBILE CARDS */}
+    <div className="md:hidden grid grid-cols-1 gap-4 p-5">
+        {movements.map((movement) => {
+            const config = MOVEMENT_TYPES[movement.type as MovementType]
+            return (
+                <div
+                    key={movement.id}
+                    className="border border-linen-light rounded-lg p-4 hover:shadow-md transition-all hover:border-gray-300" > {/* card header */}
+                    <div className="flex items-start justify-between mb-3">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color}`}>
+                            {TYPE_ICONS[movement.type as MovementType]}
+                            {config.label}
+                        </span>
+                        <span className="text-xs text-obsidian flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {formatDate(new Date(movement.date))}
+                        </span>
+                    </div>
+
+                    {/* Monto */}
+                    <p className="text-2xl font-bold text-obsidian mb-3">
+                        {formatCurrency(movement.amount)}
+                    </p>
+
+                    {/* descripcion */}
+                    <p className="text-sm text-obsidian mb-4 line-clamp-2 min-h-10">
+                        {movement.description || 'Sin descripción'}
+                    </p>
+
+                    {/* cuentas */}
+                    {(movement.incomeAccount || movement.expenseAccount) && (
+                        <div className="mb-3 pb-3 border-b border-gray-100">
+                            {movement.type === 'INCOME' || movement.type === 'EXPENSE' ? (
+                                <p className="text-xs text-clay-gray">
+                                    <span className="font-medium">
+                                        {movement.incomeAccount?.name || movement.expenseAccount?.name}
+                                    </span>
+                                </p>
+                            ) : (
+                                <div className="text-xs text-clay-gray space-y-1">
+                                    <p>
+                                        <span className="font-medium">De:</span>{' '}
+                                        <span className="capitalize text-obsidian">{movement.expenseAccount?.name}</span>
+                                    </p>
+                                    <p>
+                                        <span className="font-medium">A:</span>{' '}
+                                        <span className="capitalize text-obsidian">{movement.incomeAccount?.name}</span>
+                                    </p>
+                                </div>
+                            )}
+
+                        </div>
+                    )}
+
+                    {/* boton ver */}
+                    <Link
+                        to={`/movements/${movement.id}`}
+                        className="flex items-center justify-center gap-2 w-full py-2 text-sm font-medium text-green-balance hover:bg-green-balance-opaque rounded-lg transition-colors"
+                    >
+                        <Eye className="w-4 h-4" />
+                        ver detalle
+                    </Link>
+
+                </div>
+            )
+        })
+
+        }
+    </div>
+    ```
+7. finalmente creams otro contenedor especial que con clases de tailwind ignoraremos para la version mobile y servirá para la version desktop, usaremos por practicidad el tag table igual es importante que para versiones medianas no estaremos mostrando la descripcion
+    ```ts
+
+    {/* DESKTOP TABLE */}
+    <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-sm">
+            <thead>
+                <tr className="border-b border-linen-light bg-gray-50 text-left text-xs font-semibold text-clay-gray uppercase tracking-wide">
+                    <th className="px-5 py-3">Tipo</th>
+                    <th className="px-5 py-3">Fecha</th>
+                    <th className="px-5 py-3 hidden lg:table-cell">Descripción</th>
+                    <th className="px-5 py-3">Origen</th>
+                    <th className="px-5 py-3">Destino</th>
+                    <th className="px-5 py-3 text-right">Monto</th>
+                    <th className="px-5 py-3"></th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-linen-light">
+                {movements.map((movement) => {
+                    const config = MOVEMENT_TYPES[movement.type as MovementType]
+                    return (
+                        <tr
+                            key={movement.id}
+                            className="hover>bg-gray-50 transition-colors group"
+                        >
+                            {/* tipo */}
+                            <td className="px-5 py-4 whitespace-nowrap">
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color}`}>
+                                    {TYPE_ICONS[movement.type as MovementType]}
+                                    {config.label}
+                                </span>
+                            </td>
+
+                            {/* fecha */}
+                            <td className="px-5 py-4 whitespace-nowrap text-obsidian">
+                                <span className="flex items-center gap-1.5 text-clay-gray">
+                                    <Calendar className="w-3.5 h-3.5 shrink-0" />
+                                    {formatDate(new Date(movement.date))}
+                                </span>
+                            </td>
+
+                            {/* descripcion */}
+                            <td className="px-5 py-4 max-w-[200px] hidden lg:table-cell">
+                                <span>
+                                    {movement.description || (
+                                        <span className="text-clay-gray italic">Sin descripcion</span>
+                                    )}
+                                </span>
+                            </td>
+
+                            {/* origen (expenseAccount) */}
+                            <td className="px-5 py-4 whitespace-nowrap">
+                                {movement.expenseAccount ? (
+                                    <span className="text-obsidian capitalize">{movement.expenseAccount.name}</span>
+                                ) : (
+                                    <span className="text-clay-gray">-</span>
+                                )}
+                            </td>
+
+                            {/* destino (incomeAccount) */}
+                            <td className="px-5 py-4 whitespace-nowrap">
+                                {movement.incomeAccount ? (
+                                    <span className="text-obsidian capitalize">{movement.incomeAccount.name}</span>
+                                ) : (
+                                    <span className="text-clay-gray">-</span>
+                                )}
+                            </td>
+
+                            {/* monto */}
+                            <td className="px-5 py-4 whitespace-nowrap text-right">
+                                <span className="font-semibold text-obsidian tabular-nums">
+                                    {formatCurrency(movement.amount)}
+                                </span>
+                            </td>
+
+                            {/* accion */}
+                            <td className="px-5 py-4 whitespace-nowrap text-right">
+                                <Link
+                                    to={`/movements/${movement.id}`}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-balance hover:bg-green-balance-opaque rounded-lg transition-colors group-hover:opacity-100"
+                                >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    Ver
+                                </Link>
+                            </td>
+                        </tr>
+                    )
+                })}
+            </tbody>
+        </table>
+    </div>
+    ```
+escribir en la bitacora:
+    el heading con el props y un nuevo type para los icons 
+    el mobile version 
+    el destop version
+
+
+
+
+
+</details>
