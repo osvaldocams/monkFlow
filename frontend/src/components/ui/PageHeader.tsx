@@ -17,12 +17,12 @@ export default function PageHeader({
         <div className="mb-6 sm:mb-8">
             {/* Back button - Móvil sticky, desktop normal */}
             {backTo && (
-                <nav className="mb-4 sm:mb-6 -mx-4 sm:mx-0 px-4 sm:px-0 py-3 sm:py-0 bg-white sm:bg-transparent sm:border-0 sticky sm:static top-0 z-10">
+                <nav className="mb-4 sm:mb-6 -mx-4 sm:mx-0 px-4 sm:px-0 py-3 sm:py-0 sm:bg-transparent sm:border-0 sticky sm:static top-0 z-10">
                     <Link
                         to={backTo}
-                        className=" inline-flex items-center gap-2 text-sm sm:text-base font-medium text-linen-light bg-green-balance p-2 rounded-md hover:text-sage hover:bg-green-balance-opaque transition-colors"
+                        className="inline-flex items-center justify-center gap-2 w-36 sm:w-48 text-sm sm:text-base font-medium text-linen-light bg-green-balance p-2 rounded-md hover:text-sage hover:bg-green-balance-opaque transition-colors"
                     >
-                        <span>{backLabel}</span>
+                        <span className="truncate">{backLabel}</span>
                     </Link>
                 </nav>
             )}

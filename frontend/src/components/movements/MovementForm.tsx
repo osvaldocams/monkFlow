@@ -9,7 +9,7 @@ export default function MovementForm() {
 
     const { register, control, setValue, formState: { errors } } = useFormContext<MovementFormInputs>()
 
-    const [movementType, selectedExpenseAccount, selectedIncomeAccount] = useWatch({ 
+    const [movementType, selectedExpenseAccount, selectedIncomeAccount] = useWatch({
         control,
         name: ["type", "expenseAccountId", "incomeAccountId"]
     })
@@ -17,29 +17,29 @@ export default function MovementForm() {
 
     const { data, isLoading, isError, errorMessage } = useAccounts()
 
-    //​​reglas de negocios para filtro de cuentas según tipo de movimiento
-    const { incomeAccounts, expenseAccounts} = useMemo(() => {
+    //reglas de negocios para filtro de cuentas según tipo de movimiento
+    const { incomeAccounts, expenseAccounts } = useMemo(() => {
         const baseData = data ?? []
 
         let incomeBase = baseData
         let expenseBase = baseData
 
-        if(movementType === 'DEPOSIT'){
+        if (movementType === 'DEPOSIT') {
             incomeBase = baseData.filter(account => account.kind === 'BANK')
             expenseBase = baseData.filter(account => account.kind === 'CASH')
         }
-        if(movementType === 'WITHDRAWAL'){
+        if (movementType === 'WITHDRAWAL') {
             incomeBase = baseData.filter(account => account.kind === 'CASH')
             expenseBase = baseData.filter(account => account.kind === 'BANK')
         }
-        if(movementType === 'TRANSFER'){
+        if (movementType === 'TRANSFER') {
             incomeBase = baseData.filter(account => account.kind === 'BANK')
             expenseBase = baseData.filter(account => account.kind === 'BANK')
             //VALIDACIÓN CRUZADA: Filtramos para que no se repitan
-            if(selectedExpenseAccount){
+            if (selectedExpenseAccount) {
                 incomeBase = incomeBase.filter(account => account.id !== selectedExpenseAccount)
             }
-            if(selectedIncomeAccount){
+            if (selectedIncomeAccount) {
                 expenseBase = expenseBase.filter(account => account.id !== selectedIncomeAccount)
             }
         }
@@ -56,40 +56,39 @@ export default function MovementForm() {
     }, [movementType, setValue])
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
+        <div className="space-y-5">
+
             {/* Tipo de Movimiento */}
             <div>
                 <label className="block text-sm font-medium text-obsidian mb-2">
                     Tipo de Movimiento
                 </label>
-                <select 
+                <select
                     {...register("type")} // 👈 Conectamos con RHF
-                    className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150"
+                    className="w-full p-3 border border-green-balance rounded-lg focus:ring-sage focus:border-sage transition duration-150"
                 >
                     <option value="">-- Seleccionar --</option>
                     {Object.entries(MOVEMENT_TYPES).map(([value, config]) => (
-                        <option key={value} value={value}>{config.label}</option>
+                        <option key={value} value={value}>
+                            {config.label}
+                        </option>
                     ))}
                 </select>
             </div>
 
             {/* Tag (Dummy temporal) */}
             <div>
-                <label className="block text-sm font-medium text-obsidian mb-2">Tag</label>
-                <select className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150">
-                    <option value="">-- Seleccionar Tag --</option>
-                </select>
+                tags
             </div>
 
             {/* Date and Amount */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-obsidian mb-2">Fecha</label>
-                    <input 
-                        type="date" 
+                    <input
+                        type="date"
                         {...register("date", { required: "La fecha es obligatoria" })} // 👈 Validación básica nativa
-                        className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150" 
+                        className={`w-full p-3 border border-green-balance rounded-lg focus:ring-sage focus:border-sage transition duration-150 ${!movementType ? 'bg-linen-light cursor-not-allowed' : ''}`}
                         disabled={!movementType}
                     />
                     {errors.date && <p className="text-red-500 text-xs mt-1">{String(errors.date.message)}</p>}
@@ -98,15 +97,15 @@ export default function MovementForm() {
                 <div>
                     <label className="block text-sm font-medium text-obsidian mb-2">Monto ($)</label>
                     <input
-                        type="number" 
+                        type="number"
                         step="0.01"
-                        placeholder="Ej: 50.00" 
-                        {...register("amount", { 
+                        placeholder="Ej: 50.00"
+                        {...register("amount", {
                             valueAsNumber: true, // Convierte el valor a número automáticamente
                             required: "El monto es obligatorio",
                             min: { value: 0.01, message: "El monto debe ser mayor a cero" }
-                        })} 
-                        className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150" 
+                        })}
+                        className={`w-full p-3 border border-green-balance rounded-lg focus:ring-sage focus:border-sage transition duration-150 ${!movementType ? 'bg-linen-light cursor-not-allowed' : ''}`}
                         disabled={!movementType}
                     />
                     {errors.amount?.message && (<p className="text-red-500 text-xs font-semibold mt-1">{errors.amount.message}</p>)}
@@ -114,41 +113,53 @@ export default function MovementForm() {
             </div>
 
             {/* Accounts Relation */}
-            <div>
-                <label className="block text-sm font-medium text-obsidian mb-2">Cuenta Ingreso</label>
-                <select 
-                    disabled={!movementType || movementType === 'EXPENSE'}
-                    {...register("incomeAccountId")}
-                    className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150"
-                >
-                    <option value="">-- Seleccionar --</option>
-                    {incomeAccounts?.map(account => (
-                        <option key={account.id} value={account.id}>{account.name}</option>
-                    ))}
-                </select>
-            </div>
 
-            <div>
-                <label className="block text-sm font-medium text-obsidian mb-2">Cuenta Egreso</label>
-                <select 
-                    {...register("expenseAccountId")}
-                    className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150"
-                    disabled={!movementType || movementType === 'INCOME'}
-                >
-                    <option value="">-- Seleccionar --</option>
-                    {expenseAccounts?.map(account => (
-                        <option key={account.id} value={account.id}>{account.name}</option>
-                    ))}
-                </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* incomeAccount */}
+                <div>
+                    <label className="block text-sm font-medium text-obsidian mb-2">Cuenta Ingreso</label>
+                    <select
+                        disabled={isLoading || !movementType || movementType === 'EXPENSE'}
+                        {...register("incomeAccountId")}
+                        className={`w-full p-3 border border-green-balance rounded-lg focus:ring-sage focus:border-sage transition duration-150 ${!movementType || movementType === 'EXPENSE' ? 'bg-linen-light cursor-not-allowed' : ''}`}
+                    >
+                        <option value="">-- Seleccionar --</option>
+                        {incomeAccounts?.map(account => (
+                            <option key={account.id} value={account.id}>{account.name}</option>
+                        ))}
+                    </select>
+                    {errors.incomeAccountId && (
+                        <p className="text-red-500 text-xs font-semibold mt-1">{errors.incomeAccountId.message}</p>
+                    )}
+                </div>
+
+                {/* expenseAccounts */}
+                <div>
+                    <label className="block text-sm font-medium text-obsidian mb-2">Cuenta Egreso</label>
+                    <select
+                        disabled={isLoading || !movementType || movementType === 'INCOME'}
+                        {...register("expenseAccountId")}
+                        className={`w-full p-3 border border-green-balance rounded-lg focus:ring-sage focus:border-sage transition duration-150 ${!movementType || movementType === 'INCOME' ? 'bg-linen-light cursor-not-allowed' : ''}`}
+                    >
+                        <option value="">-- Seleccionar --</option>
+                        {expenseAccounts?.map(account => (
+                            <option key={account.id} value={account.id}>{account.name}</option>
+                        ))}
+                    </select>
+                    {errors.expenseAccountId && (
+                        <p className="text-red-500 text-xs font-semibold mt-1">{errors.expenseAccountId.message}</p>
+                    )}
+                </div>
+
             </div>
 
             {/* Description */}
             <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-obsidian mb-2">Descripción</label>
-                <textarea 
-                    placeholder="Detalles del movimiento (Ej: Pago de renta, Venta freelance)." 
+                <textarea
+                    placeholder="Detalles del movimiento (Ej: Pago de renta, Venta freelance)."
                     {...register("description", { maxLength: { value: 200, message: "Máximo 200 caracteres" } })}
-                    className="w-full p-3 border border-stone-200 rounded-lg focus:ring-sage focus:border-sage transition duration-150" 
+                    className={`w-full p-3 border border-green-balance rounded-lg focus:ring-sage focus:border-sage transition duration-150 ${!movementType ? 'bg-linen-light cursor-not-allowed' : ''}`}
                     disabled={!movementType}
                 />
                 {errors.description && <p className="text-red-500 text-xs mt-1">{String(errors.description.message)}</p>}

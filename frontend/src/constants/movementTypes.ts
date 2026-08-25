@@ -8,26 +8,26 @@ export const MOVEMENT_TYPES: Record<MovementType, { label: string, color: string
     },
     EXPENSE: {
         label: 'Gasto',
-        color: 'text-green-balance',
-        bg: 'bg-green-balance-opaque'
+        color: 'text-ritual-red',
+        bg: 'bg-ritual-red-opaque'
 
     },
     DEPOSIT: {
         label: 'Depósito',
-        color: 'text-green-balance',
-        bg: 'bg-green-balance-opaque'
+        color: 'text-rise-paper',
+        bg: 'bg-gray-400'
 
     },
     WITHDRAWAL: {
         label: 'Retiro',
-        color: 'text-green-balance',
-        bg: 'bg-green-balance-opaque'
+        color: 'text-obsidian',
+        bg: 'bg-linen-light'
 
     },
     TRANSFER: {
         label: 'Transferencia',
-        color: 'text-green-balance',
-        bg: 'bg-green-balance-opaque'
+        color: 'text-clay-gray',
+        bg: 'bg-clay-gray-opaque'
 
     },
 } as const
