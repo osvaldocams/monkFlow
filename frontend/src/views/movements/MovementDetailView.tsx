@@ -1,7 +1,14 @@
 import PageHeader from "@/components/ui/PageHeader";
+import { useMovementById } from "@/hooks/useMovements";
 import { ArrowLeft, Calendar, Plus, Tag, Trash2 } from "lucide-react";
+import { useParams } from "react-router-dom";
 
 export default function MovementDetailView() {
+
+    const params = useParams()
+    const movementId = params.movementId!
+
+    const { data, isLoading, error } = useMovementById(movementId || '')
 
     return (
         <>
@@ -24,7 +31,7 @@ export default function MovementDetailView() {
                             movement label (dummy)
                         </span>
                         <h2 className="text-4xl sm:text-5xl font-bold text-obsidian mb-2">
-                            $100 (dumy)
+                            {data?.amount} hello
                         </h2>
                         {/* dummy data iteration */}
                         <p className="text-obsidian text-sm sm:text-base mt-2 italic max-w-md mx-auto">
@@ -90,7 +97,7 @@ export default function MovementDetailView() {
                                 Añadir
                             </button>
                         </div>
-                        {/* seccion pendiente */}
+                        {/* parte pendiente */}
                     </div>
 
                     <hr className="border-clay-gray" />

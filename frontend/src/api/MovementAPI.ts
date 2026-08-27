@@ -1,5 +1,5 @@
 import api from "@/lib/axios"
-import { movementListSchema, type CreateMovementDto, type MovementList } from "@/types"
+import { movementListSchema, movementSchema, type CreateMovementDto, type Movement, type MovementList } from "@/types"
 import { handleApiError } from "./handleApiErrors"
 
 export const MovementAPI = {
@@ -8,20 +8,20 @@ export const MovementAPI = {
             const { data } = await api.post("/movements", dtoData)
             return data
         } catch (error) {
-            handleApiError(error, 'Error creating movement', dtoData )
+            handleApiError(error, 'Error creating movement', dtoData)
         }
     },
     /** 
      * obtener la colección completa de movimientos desde el backend
      * validando las respuestas con Zod para asegurar la integridad de los datos en el frontend
     */
-    getMovements: async(): Promise<MovementList> => {
+    getMovements: async (): Promise<MovementList> => {
         try {
-            const {data} = await api.get("/movements")
+            const { data } = await api.get("/movements")
             //validamos la estructura exacta que viene del backend
             const response = movementListSchema.safeParse(data)
-            if(!response.success){
-                if(import.meta.env.DEV){
+            if (!response.success) {
+                if (import.meta.env.DEV) {
                     console.error('⚠️ [Zod Validation Error]:', response.error.format())
                 }
                 //lanzamos un error explicito si la validación falla, para que el frontend pueda manejarlo adecuadamente
@@ -32,5 +32,22 @@ export const MovementAPI = {
             // Pasamos el error y el contexto explícito para tus logs del modo dev
             handleApiError(error, "MovementAPI.getMovements")
         }
+    },
+    getMovementById: async (id: Movement['id']): Promise<Movement> => {
+        try {
+            const { data } = await api.get(`/movements/${id}`)
+            const response = movementSchema.safeParse(data)
+            if (!response.success) {
+                if (import.meta.env.DEV) {
+                    console.log('validation error:', response.error.format())
+                }
+                throw new Error('The movement data is not in the expected format')
+            }
+            return response.data
+        } catch (error) {
+            //debuging logs for development only
+            handleApiError(error, 'Error fetching movement', { id })
+        }
+
     }
 }
