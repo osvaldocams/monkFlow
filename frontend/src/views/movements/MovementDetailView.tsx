@@ -8,8 +8,8 @@ export default function MovementDetailView() {
     const params = useParams()
     const movementId = params.movementId!
 
-    const { data, isLoading, error } = useMovementById(movementId || '')
-
+    const { data: movement, isLoading, error } = useMovementById(movementId || '')
+    console.log(movement)
     return (
         <>
             <PageHeader
@@ -31,11 +31,11 @@ export default function MovementDetailView() {
                             movement label (dummy)
                         </span>
                         <h2 className="text-4xl sm:text-5xl font-bold text-obsidian mb-2">
-                            {data?.amount} hello
+                            {movement?.amount} hello
                         </h2>
                         {/* dummy data iteration */}
                         <p className="text-obsidian text-sm sm:text-base mt-2 italic max-w-md mx-auto">
-                            descripción del movimiento (dummy)
+                            "{movement?.description}"
                         </p>
                     </div>
 

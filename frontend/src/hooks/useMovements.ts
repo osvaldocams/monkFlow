@@ -25,7 +25,7 @@ export const useMovementById = (movementId: Movement['id']) => {
     const query = useQuery({
         queryKey: ['movements', movementId],
         queryFn: () => MovementAPI.getMovementById(movementId),
-        enabled: !movementId
+        enabled: !!movementId
     })
     return {
         ...query,

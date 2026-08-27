@@ -47,6 +47,7 @@ export const MovementAPI = {
         } catch (error) {
             //debuging logs for development only
             handleApiError(error, 'Error fetching movement', { id })
+            throw error
         }
 
     }
