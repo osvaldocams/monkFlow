@@ -1,6 +1,10 @@
 import PageHeader from "@/components/ui/PageHeader";
-import { useMovementById } from "@/hooks/useMovements";
-import { ArrowLeft, Calendar, Plus, Tag, Trash2 } from "lucide-react";
+import { MOVEMENT_TYPES } from "@/constants/movementTypes";
+import { formatCurrency } from "@/helpers/formatCurrency";
+import { formatDate } from "@/helpers/formatDate";
+import { useDeleteMovement, useMovementById } from "@/hooks/useMovements";
+import type { MovementType } from "@/types";
+import { AlertCircle, ArrowLeft, Calendar, Plus, Tag, Trash2 } from "lucide-react";
 import { useParams } from "react-router-dom";
 
 export default function MovementDetailView() {
@@ -9,7 +13,53 @@ export default function MovementDetailView() {
     const movementId = params.movementId!
 
     const { data: movement, isLoading, error } = useMovementById(movementId || '')
-    console.log(movement)
+
+    const { mutate: handleDelete, isPending: isDeleting } = useDeleteMovement()
+
+    const onDelete = () => {
+        if (window.confirm('¿Estás seguro de eliminar este movimiento? Esta acción no se puede deshacer.')) {
+            handleDelete(movementId)
+        }
+    }
+
+    const movementConfig = MOVEMENT_TYPES[movement?.type as MovementType]
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Cargando Movimiento...</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <>
+                <PageHeader
+                    title="Error"
+                    backTo="/movements"
+                    backLabel="Volver a movimientos"
+                />
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
+                    <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-6 text-red-600 shrink-0 mt-0.5" />
+                        <div>
+                            <h3 className="text-lg font-semibold text-red-800">
+                                Error al cargar el movimiento
+                            </h3>
+                            <p className="text-red-700 mt-1">{error.message}</p>
+                        </div>
+                    </div>
+                </div>
+            </>
+        )
+    }
+
+    if (!movement) return null
+
     return (
         <>
             <PageHeader
@@ -27,16 +77,17 @@ export default function MovementDetailView() {
                     {/* header tipo y monto */}
                     <div className=" bg-clay-gray-opaque  p-6 sm:p-8 text-center border-b border-linen-light">
                         <span
-                            className={`inline-block px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wider bg-amber-100 text-blue-950} mb-3 shadow-sm`}>
-                            movement label (dummy)
+                            className={`inline-block px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold uppercase tracking-wider ${movementConfig.bg} ${movementConfig.color} mb-3 shadow-sm`}>
+                            {movementConfig.label}
                         </span>
                         <h2 className="text-4xl sm:text-5xl font-bold text-obsidian mb-2">
-                            {movement?.amount} hello
+                            {formatCurrency(movement?.amount)}
                         </h2>
-                        {/* dummy data iteration */}
-                        <p className="text-obsidian text-sm sm:text-base mt-2 italic max-w-md mx-auto">
-                            "{movement?.description}"
-                        </p>
+                        {movement.description && (
+                            <p className="text-obsidian text-sm sm:text-base mt-2 italic max-w-md mx-auto">
+                                "{movement?.description}"
+                            </p>
+                        )}
                     </div>
 
                     {/* detalles */}
@@ -55,7 +106,7 @@ export default function MovementDetailView() {
                                         Fecha
                                     </p>
                                     <p className="text-sm sm:text-base font-medium text-obsidian mt-1">
-                                        12/02/1987 (dummy)
+                                        {formatDate(new Date(movement.date))}
                                     </p>
                                 </div>
                             </div>
@@ -67,51 +118,81 @@ export default function MovementDetailView() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-semibold text-clay-gray uppercase tracking-wide mb-1">Cuentas</p>
-                                    {/* dummy lleva iteracion */}
-                                    <div className="text.sm">
-                                        <span className="text-obsidian font-medium">
-                                            Entra a:
-                                        </span>
-                                        <span>
-                                            BBVA (dummy)
-                                        </span>
-
-                                    </div>
+                                    {movement.type === 'INCOME' || movement.type === 'EXPENSE' ? (
+                                        <div className="text-sm">
+                                            <span className="text-obsidian font-medium">
+                                                {movement.type === 'INCOME' ? 'Entra a:' : 'Sale de:'}
+                                            </span>
+                                            <p className="font-medium text-obsidian capitalize">
+                                                {movement.incomeAccount?.name || movement.expenseAccount?.name}
+                                            </p>
+                                        </div>
+                                    ) :
+                                        (
+                                            <div className="text-sm space-y-1">
+                                                <div>
+                                                    <span className="text-clay-gray font-medium">De:</span>
+                                                    <span className="ml-1 font-medium text-obsidian capitalize">
+                                                        {movement.expenseAccount?.name}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-clay-gray font-medium">A:</span>
+                                                    <span className="ml-1 font-medium text-obsidian capitalize">
+                                                        {movement.incomeAccount?.name}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )
+                                    }
                                 </div>
-
                             </div>
                         </div>
-                    </div>
 
-                    <hr className="border-clay-gray" />
+                        <hr className="border-clay-gray" />
 
-                    {/* seccion de tags */}
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2 text-obsidian">
-                                <Tag className="w-5 h-5" />
-                                <span className="font-semibold text-base">Etiquetas</span>
+                        {/* seccion de tags */}
+                        <div>
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2 text-obsidian">
+                                    <Tag className="w-5 h-5" />
+                                    <span className="font-semibold text-base">Etiquetas</span>
+                                </div>
+                                <button className="flex items-center gap-1.5 text-xs sm:text-sm text-green-balance font-bold cursor-pointer hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
+                                    <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                    Añadir
+                                </button>
                             </div>
-                            <button className="flex items-center gap-1.5 text-xs sm:text-sm text-green-balance font-bold cursor-pointer hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
-                                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                Añadir
-                            </button>
+                            {/* parte pendiente */}
                         </div>
-                        {/* parte pendiente */}
+
+                        <hr className="border-clay-gray" />
+
+                        {/* acciones */}
+                        <button
+                            onClick={onDelete}
+                            disabled={isDeleting}
+                            className={
+                                `flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all
+                                ${isDeleting
+                                    ? 'bg-linen-light text-clay-gray border-clay-gray cursor-not-allowed'
+                                    : 'text-ritual-red hover:text-ritual-red border border-red-200 hover:bg-ritual-red-opaque cursor-pointer'
+                                }
+                            `}
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-clay-gray" />
+                                    <span>Eliminando...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Trash2 className="w-4 h-4" />
+                                    <span>Eliminar Movimiento</span>
+                                </>
+                            )}
+                        </button>
                     </div>
-
-                    <hr className="border-clay-gray" />
-
-                    {/* acciones */}
-                    <button
-                        onClick={() => { }}
-                        /*  disabled= {isDeleting} */
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                        <span>Eliminar Movimiento</span>
-                    </button>
-
                 </div>
 
                 {/* Información adicional */}
@@ -125,4 +206,3 @@ export default function MovementDetailView() {
         </>
     )
 }
-

@@ -50,5 +50,14 @@ export const MovementAPI = {
             throw error
         }
 
+    },
+    deleteMovement: async (id: Movement['id']): Promise<Movement> => {
+        try {
+            const { data } = await api.delete(`/movements/${id}`)
+            return data
+        } catch (error) {
+            //debuging for development only
+            handleApiError(error, 'Error deleting movement', { id })
+        }
     }
 }

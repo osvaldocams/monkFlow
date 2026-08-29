@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MovementAPI } from '@/api/MovementAPI'
 import type { CreateMovementDto, Movement } from '@/types'
+import { useNavigate } from 'react-router-dom'
 
 //==============================================
 //  hook para consultar lista de movimientos
@@ -44,6 +45,27 @@ export const useCreateMovement = () => {//3️⃣ creamos nuestro hook para la m
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["movements"] })
             console.log("¡Movimiento creado con éxito en la base de datos!")
+        },
+        onError: (error) => {
+            console.error("Error en la mutación:", error)
+        }
+    })
+}
+
+//==============================================
+//  hook para mutación/eliminar movimientos
+//==============================================
+export const useDeleteMovement = () => {
+    const queryClient = useQueryClient()
+    const navigate = useNavigate()
+
+    return useMutation({
+        mutationFn: (id: Movement['id']) => MovementAPI.deleteMovement(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["movements"] })
+            queryClient.invalidateQueries({ queryKey: ["accounts"] })
+            console.log("¡Movimiento creado con éxito en la base de datos!")
+            navigate('/movements')
         },
         onError: (error) => {
             console.error("Error en la mutación:", error)
