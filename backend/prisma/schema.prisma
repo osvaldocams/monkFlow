@@ -61,6 +61,31 @@ model Movement {
   // Requerido en: EXPENSE, TRANSFER, WITHDRAWAL
   expenseAccountId String?
   expenseAccount   Account?     @relation("MoneyExtraction", fields: [expenseAccountId], references: [id], onDelete: Restrict)
+
+  // 👈 RELACIÓN CON TAGS (Implicit Many-to-Many)
+  tags             Tag[]
+
   @@map("movements")
+}
+
+// ==========================================
+// TAG MODULE
+// ==========================================
+model Tag {
+  id        String     @id @default(uuid())
+  name      String
+  slug      String     @unique // Para evitar slugs duplicados y usar en filtros si se desea
+  color     String     @default("#6B7280") // Color en hex para los badges en UI
+
+  // Campo preparado para cuando conectes autenticación/usuarios
+  userId    String?
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // 👈 RELACIÓN INVERSA CON MOVEMENTS
+  movements Movement[]
+
+  @@map("tags")
 }
 
