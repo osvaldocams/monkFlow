@@ -44,3 +44,18 @@ server.use('/api/tags', TagsRouter)
 
 **[2026-08-30] - POST Tags**
 
+1. empezaremos creando `src/helpers/index.ts` basicamente crearemos la funcion que transforma el name en el slug y una segunda que revise que sea unico
+
+2. ya que tenemos el helper ya podemos trabajar en el controlador, agregamos un nuevo método estático `createTag`
+    - se extrae name y color del body
+    - se genera el slug
+    - se verifica unicidad
+    - se crea en la db.
+
+3. creamos el endpoint en `tagRoutes.ts` se crea el endpoint tipo POST, validamos los input pasamos el middleware que maneja los errores de input y finalmente el controlador
+
+4. realizamos una prueba ejecutando desde el archivo http, revisamos que se generen los tags y que el comportamiento esté conforme a lo esperado, caso contrario revisamos de vuelta.
+
+5. la prueba resultó exitosa.
+
+
