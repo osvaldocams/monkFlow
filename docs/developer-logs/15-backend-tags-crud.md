@@ -58,4 +58,17 @@ server.use('/api/tags', TagsRouter)
 
 5. la prueba resultó exitosa.
 
+***
+
+**[2026-09-01] - GET Tags**
+
+Implementación de Consulta en Controlador (TagControllers.ts):
+
+1. Escribimos la lógica real dentro del método estático getAllTags. En lugar del mensaje mock previo, integramos prisma.tag.findMany ordenando los resultados de forma consistente. La respuesta se devuelve con un estado 200 OK dentro de un bloque try/catch estandarizado con registro de errores e informe de fallo en servidor (500 Internal Server Error).
+
+2. Ajustes en Enrutador (tagRoutes.ts):
+    Como la ruta GET / ya se había definido durante la comprobación inicial de la estructura MVC, únicamente se limpió el archivo agregando bloques de comentarios descriptivos para mantener la coherencia y legibilidad visual con el resto de módulos del proyecto.
+
+3. Verificación y Depuración de Petición HTTP:
+    Se ejecutó la prueba desde el cliente HTTP en Neovim. Durante el primer intento se observó que la respuesta seguía devolviendo el mensaje mock antiguo; la causa fue que el proceso del servidor backend se había pausado en segundo plano. Tras reiniciar el servidor de desarrollo, el endpoint devolvió exitosamente el arreglo de etiquetas registrado en PostgreSQL.
 

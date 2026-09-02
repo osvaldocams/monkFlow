@@ -35,6 +35,16 @@ export class TagControllers {
     }
 
     static getAllTags = async (req: Request, res: Response) => {
-        res.json({ message: "tags hello world" })
+        try {
+            const tags = await prisma.tag.findMany({
+                orderBy: {
+                    name: 'asc'
+                }
+            })
+            res.status(200).json(tags)
+        } catch (error) {
+            console.log(error)
+            res.status(500).json({ error: 'Error fetching tags' })
+        }
     }
 }
