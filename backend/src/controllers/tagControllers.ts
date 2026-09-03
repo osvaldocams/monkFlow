@@ -52,6 +52,23 @@ export class TagControllers {
             res.status(500).json({ error: 'Error fetching tags' })
         }
     }
+    static getTagById = async (req: Request<{ id: string }>, res: Response) => {
+        console.log("--> entró a getById coon id", req.params.id)
+        try {
+            const { id } = req.params
+            const tag = await prisma.tag.findUnique({
+                where: { id }
+            })
+            if (!tag) {
+                return res.status(404).json({ error: 'Tag not found' })
+            }
+            res.status(200).json(tag)
+
+        } catch (error) {
+            console.log(error)
+            res.status(500).json({ error: 'Error fetching tag' })
+        }
+    }
 
     static updateTag = async (req: Request<{ id: string }, {}, UpdateTagInput>, res: Response) => {
         try {

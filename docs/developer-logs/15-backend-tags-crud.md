@@ -142,7 +142,7 @@ Implementación de Consulta en Controlador (TagControllers.ts):
         handleInputErrors,
         TagControllers.updateTag
     )
-```
+    ```
 3. realizamos una prueba http
 ```
 ### PATCH update tag
@@ -153,3 +153,30 @@ Content-Type: application/json
     "name": "tag updated"
 }
 ```
+
+
+**[2026-09-02] - GET Tags by id**
+
+1. para obtener los tags por su id vamos a escribir un nuevo metodo estatico `getTagById` el proceso es: obtener el id, obtenemos el id de la base de datos, validamos que se haya obtenido correctamente, enviamos la respuesta con el status 200 y el json
+
+2. creamos la ruta en el archivo `tagRoutes` solamente validamos el param uuid, si pasa la validación entra el middleware y depues el controlador.
+
+3. finalmente hacemos una prueba, podemos hacer una peticion getAllTags, copiarnos un id, lo escribimos en nuestra url y probamos 
+
+4. durante la prueba encontramos un `zombie proccess` revisamos varias veces que el código no tuviera alguna inconsistencia sin embargo no fue posible encontrar nada, tras una prueba donde comprobamos que nuestro controlador no llegaba a ejecutarse, se infirió que podía ser un tema con el server, así que detuvimos la ejecución y la volvimos a poner en marcha, lo cual fue la solución.
+nos queda el siguiente aprendizaje: Cuando un endpoint responda con una página HTML de error de Express (Cannot GET /...), es la señal clara de que el servidor no reconoce la ruta y conviene hacer un reinicio limpio del proceso de desarrollo en la terminal.
+
+1. Implementación de Búsqueda Individual (`TagControllers.ts`):
+    Creamos el método estático `getTagById`. La función extrae el parámetro `id` de `req.params` y ejecuta la consulta mediante `prisma.tag.findUnique`. Se añade una validación explícita para verificar la existencia del registro: si la búsqueda devuelve null, responde un estado 404 Not Found con mensaje formativo; en caso de éxito, retorna la etiqueta con un estado 200 OK.
+
+2. Registro de Ruta y Middleware (tagRoutes.ts):
+    Registramos el endpoint GET /:id aplicando la regla de validación de express-validator sobre el parámetro de ruta (param('id').isUUID()). La petición pasa secuencialmente por el middleware handleInputErrors antes de delegar la ejecución al controlador getTagById.
+
+3. Verificación de Endpoint E2E:
+    Obtuvimos un UUID válido ejecutando previamente la petición GET /api/tags y realizamos la prueba de lectura individual desde el cliente HTTP en Neovim.
+
+4. Depuración de "Zombie Process" y Aprendizaje Técnico:
+    Durante las primeras pruebas la petición fue rechazada con un error HTML nativo de Express (Cannot GET /api/tags/<uuid>). Al comprobar mediante logs que la ejecución ni siquiera alcanzaba el controlador, se determinó que el proceso de desarrollo en memoria (tsx watch) se hallaba desincronizado y desfasado respecto al archivo de rutas actualizado. Tras detener la ejecución y reiniciar la terminal con pnpm dev, el mapa de rutas se re-compiló correctamente y la prueba fue exitosa.
+
+    💡 Post-Mortem / Key Takeaway:
+    Cuando un endpoint responda con una página HTML de error de Express (Cannot GET /...), es una señal clara de que el servidor en ejecución no reconoce la ruta en su tabla activa. Antes de reescribir código, conviene hacer un reinicio limpio del proceso de desarrollo en la terminal.

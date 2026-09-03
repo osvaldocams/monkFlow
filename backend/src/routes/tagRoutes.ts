@@ -10,6 +10,13 @@ const router = Router()
 // GET ALL TAGS
 router.get('/', TagControllers.getAllTags)
 
+//GET TAG BY ID
+router.get('/:id',
+    param('id').isUUID().withMessage('The tag ID must be a valid UUID'),
+    handleInputErrors,
+    TagControllers.getTagById
+)
+
 
 // CREATE TAG
 router.post('/',
@@ -32,6 +39,7 @@ router.patch('/:id',
     handleInputErrors,
     TagControllers.updateTag
 )
+
 
 
 export default router
