@@ -72,3 +72,84 @@ Implementación de Consulta en Controlador (TagControllers.ts):
 3. Verificación y Depuración de Petición HTTP:
     Se ejecutó la prueba desde el cliente HTTP en Neovim. Durante el primer intento se observó que la respuesta seguía devolviendo el mensaje mock antiguo; la causa fue que el proceso del servidor backend se había pausado en segundo plano. Tras reiniciar el servidor de desarrollo, el endpoint devolvió exitosamente el arreglo de etiquetas registrado en PostgreSQL.
 
+
+**[2026-09-02] - PATCH Tags**
+
+1. para implementar la modificacion de los tags vamos a crear un metodo PATCH, lo primero es ir al archivo `tagControllers` y vamos a crear un interface que nos dé el tipo de  los inputs, posteriormente creamos un metodo `updateTag`
+    - la interface UpdateTagInput, recibe name? y color? ambos string 
+    - empezamos con el metodo updateTag primero necesitamos buscar el tag existente lo hacemos con el metodo `findUnique` y validamos que existe
+    - preparamos los datos para su actualización `const data: { name?: string; slug?: string; color?: string } = {}`
+    - para el caso de name validamos que no sea undefined para asignar name y crear el slug tambien verificamos la unicidad
+    ```ts 
+    // 2. Preparar datos de actualización
+    const data: { name?: string; slug?: string; color?: string } = {}
+
+    if (name !== undefined) {
+        data.name = name
+        data.slug = generateSlug(name)
+
+        // Solo verificar unicidad si el slug cambió
+        if (data.slug !== existingTag.slug) {
+            if (!(await isSlugUnique(data.slug))) {
+                return res.status(409).json({ error: "A tag with this name already exists" })
+            }
+        }
+    }
+    ```
+    - hacemos lo propio con color acá solo validamos que no esté undefined y lo asignamos
+    ```ts 
+    if (color !== undefined) {
+        data.color = color
+    }
+    ```
+    - actualizamos el tag y mandamos la respuesta
+    ```ts 
+    // 3. Actualizar
+    const updatedTag = await prisma.tag.update({
+        where: { id },
+        data
+    })
+
+    res.status(200).json(updatedTag)
+    ```
+    - hacemos el manejo de errores en el catch
+    ```ts 
+    catch (error) {
+        console.error(error)
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2025') {
+                return res.status(404).json({ error: "Tag not found" })
+            }
+        }
+        res.status(500).json({ error: "Error updating tag" })
+    }
+    ```
+
+2. vamos al archivo `tagRoutes` vamos a crear la ruta con sus respectivas validaciones express validator 
+    - esta ruta patch para saber que tag es recibe un id 
+    - realizamos validaciones tanto al param como al body, posteriormente solo añadimos el middleware para inputs y el controlador
+    ```ts 
+    // UPDATE TAG
+    router.patch("/:id",
+        param("id").isUUID().withMessage("The tag ID must be a valid UUID"),
+        body("name")
+            .optional()
+            .trim()
+            .notEmpty().withMessage("Tag name cannot be empty"),
+        body("color")
+            .optional()
+            .isHexColor().withMessage("Color must be a valid hex color"),
+        handleInputErrors,
+        TagControllers.updateTag
+    )
+```
+3. realizamos una prueba http
+```
+### PATCH update tag
+PATCH http://localhost:3000/api/tags/69457f44f2dad07f0d0c3490
+Content-Type: application/json
+
+{
+    "name": "tag updated"
+}
+```

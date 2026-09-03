@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { TagControllers } from "../controllers/tagControllers.js";
-import { body } from "express-validator";
+import { body, param } from "express-validator";
 import { handleInputErrors } from "../middleware/index.js";
 
 
@@ -18,4 +18,20 @@ router.post('/',
     handleInputErrors,
     TagControllers.createTag
 )
+
+// UPDATE TAG 
+router.patch('/:id',
+    param("id").isUUID().withMessage("The tag ID must be a valid UUID"),
+    body('name')
+        .optional()
+        .trim()
+        .notEmpty().withMessage('Tag name cannot be empty'),
+    body('color')
+        .optional()
+        .isHexColor().withMessage("color must be a valid hex color"),
+    handleInputErrors,
+    TagControllers.updateTag
+)
+
+
 export default router

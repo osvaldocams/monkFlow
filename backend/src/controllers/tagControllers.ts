@@ -1,11 +1,16 @@
 import { Request, Response } from 'express'
 import { generateSlug, isSlugUnique } from '../helpers/index.js'
 import prisma from '../config/db.js'
+import { Prisma } from '@prisma/client'
 
 
 
 interface CreateTagInput {
     name: string,
+    color?: string
+}
+interface UpdateTagInput {
+    name?: string,
     color?: string
 }
 
@@ -45,6 +50,55 @@ export class TagControllers {
         } catch (error) {
             console.log(error)
             res.status(500).json({ error: 'Error fetching tags' })
+        }
+    }
+
+    static updateTag = async (req: Request<{ id: string }, {}, UpdateTagInput>, res: Response) => {
+        try {
+            const { id } = req.params
+            const { name, color } = req.body
+
+            //1. buscar tag existente verificar que existe
+            const existingTag = await prisma.tag.findUnique({ where: { id } })
+
+            if (!existingTag) {
+                return res.status(404).json({ error: 'Tag not found' })
+            }
+
+            //2. preparar datos para actualización
+            const data: { name?: string; slug?: string; color?: string } = {}
+
+            if (name !== undefined) {
+                data.name = name
+                data.slug = generateSlug(name)
+                //verificar unicidad si el slug cambia
+                if (data.slug !== existingTag.slug) {
+                    if (!(await isSlugUnique(data.slug))) {
+                        return res.status(409).json({ error: 'A tag with this name already exist' })
+                    }
+                }
+            }
+            if (color !== undefined) {
+                data.color = color
+            }
+
+            //3. actualizar 
+            const updatedTag = await prisma.tag.update({
+                where: { id },
+                data
+            })
+
+            //respuesta
+            res.status(200).json(updatedTag)
+
+        } catch (error) {
+            console.log(error)
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2025') {
+                    return res.status(404).json({ error: "Tag not found" })
+                }
+            }
+            res.status(500).json({ error: 'Error updating tag' })
         }
     }
 }
