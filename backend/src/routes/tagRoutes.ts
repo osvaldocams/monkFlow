@@ -18,7 +18,7 @@ router.get('/:id',
 )
 
 
-// CREATE TAG
+// POST CREATE TAG
 router.post('/',
     body("name").trim().notEmpty().withMessage("Tag name is required"),
     body("color").optional().isHexColor().withMessage("Color must be a valid hex color"),
@@ -26,7 +26,7 @@ router.post('/',
     TagControllers.createTag
 )
 
-// UPDATE TAG 
+// PATCH UPDATE TAG 
 router.patch('/:id',
     param("id").isUUID().withMessage("The tag ID must be a valid UUID"),
     body('name')
@@ -40,6 +40,12 @@ router.patch('/:id',
     TagControllers.updateTag
 )
 
+// DELETE TAG
+router.delete('/:id',
+    param('id').isUUID().withMessage('The tag ID must be a valid UUID'),
+    handleInputErrors,
+    TagControllers.deleteTag
+)
 
 
 export default router

@@ -180,3 +180,21 @@ nos queda el siguiente aprendizaje: Cuando un endpoint responda con una página 
 
     💡 Post-Mortem / Key Takeaway:
     Cuando un endpoint responda con una página HTML de error de Express (Cannot GET /...), es una señal clara de que el servidor en ejecución no reconoce la ruta en su tabla activa. Antes de reescribir código, conviene hacer un reinicio limpio del proceso de desarrollo en la terminal.
+
+
+**[2026-09-04] - DELETE tag**
+
+1. Lógica de Eliminación e Integridad Referencial (TagControllers.ts):
+Implementamos el método estático deleteTag. Para garantizar que la eliminación no rompa el historial de transacciones, se configuró una estrategia de protección previa:
+    - Se consulta la etiqueta mediante prisma.tag.findUnique incluyendo la relación con movimientos (include: { movements: true }).
+    - Se evalúa la existencia de la etiqueta; de no encontrarse, responde un estado 404 Not Found.
+    - Se añade una regla de negocio: si la etiqueta contiene movimientos vinculados (tag.movements.length > 0), se detiene la operación devolviendo un código 409 Conflict para informar al cliente que no es posible eliminar una etiqueta en uso.
+    - Si supera las validaciones, se ejecuta prisma.tag.delete y se retorna una respuesta con estado 200 OK.
+
+2. Definición de Ruta HTTP (tagRoutes.ts):
+Registramos el endpoint DELETE /:id implementando la sanitización de parámetros con express-validator:
+    - Parámetro id validado estrictamente como UUID.
+    - Ejecución del middleware handleInputErrors antes de invocar la lógica del controlador.
+
+3. Pruebas End-to-End:
+Se realizaron las peticiones desde el cliente HTTP en Neovim comprobando la eliminación exitosa de etiquetas huérfanas, así como la activación de la respuesta 409 al intentar borrar etiquetas con transacciones asociadas.
