@@ -257,4 +257,38 @@ export class MovementController {
             res.status(500).json({ error: 'Error adding tag to movement' })
         }
     }
+    static removeTagFromMovement = async (req: Request<{ id: string; tagId: string }>, res: Response) => {
+        try {
+            const { id, tagId } = req.params
+
+            const movement = await prisma.movement.findUnique({ where: { id } })
+            if (!movement) {
+                return res.status(404).json({ error: 'Movement not found' })
+            }
+
+            const tag = await prisma.tag.findUnique({ where: { id: tagId } })
+            if (!tag) {
+                return res.status(404).json({ error: 'Tag not found' })
+            }
+
+            const isAssociated = await prisma.movement.findFirst({
+                where: { id, tags: { some: { id: tagId } } }
+            })
+            if (!isAssociated) {
+                return res.status(404).json({ error: 'Tag is not associated to this movement' })
+            }
+
+            await prisma.movement.update({
+                where: { id },
+                data: { tags: { disconnect: { id: tagId } } }
+            })
+
+            res.status(200).json({ message: `Tag '${tag.name}' removed from movement` })
+
+        } catch (error) {
+            console.log(error)
+            res.status(500).json({ error: 'Error removing tag from movement' })
+        }
+
+    }
 }

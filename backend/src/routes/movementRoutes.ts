@@ -72,4 +72,12 @@ router.post("/:id/tags",
     MovementController.addTagToMovement
 )
 
+// REMOVE TAG FROM MOVEMENT
+router.delete("/:id/tags/:tagId",
+    param("id").isUUID().withMessage("The movement ID must be a valid UUID"),
+    param("tagId").isUUID().withMessage("The tag ID must be a valid UUID"),
+    handleInputErrors,
+    MovementController.removeTagFromMovement
+)
+
 export default router
