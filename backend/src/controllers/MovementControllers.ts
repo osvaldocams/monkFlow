@@ -102,6 +102,14 @@ export class MovementController {
                             name: true,
                             kind: true
                         }
+                    },
+                    tags: {
+                        select: {
+                            id: true,
+                            name: true,
+                            slug: true,
+                            color: true
+                        }
                     }
                 },
                 orderBy: {
@@ -135,6 +143,14 @@ export class MovementController {
                             id: true,
                             name: true,
                             kind: true
+                        }
+                    },
+                    tags: {
+                        select: {
+                            id: true,
+                            name: true,
+                            slug: true,
+                            color: true
                         }
                     }
                 },

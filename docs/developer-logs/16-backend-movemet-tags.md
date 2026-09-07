@@ -123,3 +123,29 @@ router.delete("/:id/tags/:tagId",
     MovementController.removeTagFromMovement
 )
 ```
+
+----
+
+
+**[2026-09-06] - tags en Movements queries**
+
+1. al ejecutar nuestros endpoint getAllMovements y getMovementById no se muestran los tags en las consultas por lo que tenemos que hacer una pequeña adicion en los controladores, agregamos un bloque despues de los badges de los account 
+```ts
+//getAllMovements - getMovementById
+include: {
+    incomeAccount: {
+        select: { id: true, name: true, kind: true }
+    },
+    expenseAccount: {
+        select: { id: true, name: true, kind: true }
+    },
+    tags: {                              // ← agregar
+        select: {                        //    este bloque
+            id: true,
+            name: true,
+            slug: true,
+            color: true
+        }
+    }
+},
+```
