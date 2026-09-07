@@ -149,3 +149,32 @@ include: {
     }
 },
 ```
+
+---
+
+
+**[2026-09-06] - http-test**
+
+1. realizamos un par de pruebas exitosas en el archivo de peticiones http
+Añadimos un bloque dedicado (`### MOVEMENTS/TAGS`) en el archivo de peticiones HTTP para documentar y probar los endpoints de la relación entre movimientos y etiquetas:
+   - **`POST /api/movements/:id/tags`**: Envío de payload JSON `{ "tagId": "<uuid>" }` para validar la asociación atómica y la respuesta con mensaje de confirmación.
+   - **`DELETE /api/movements/:id/tags/:tagId`**: Envío de petición DELETE parametrizada por URL para verificar la desvinculación en la tabla intermedia `_MovementToTag`.
+
+2. **Ejecución y Verificación E2E:**
+Se ejecutaron las pruebas utilizando el cliente `Kulala.nvim` en Neovim. Se validaron los flujos de éxito (`200 OK`), la persistencia de relaciones en las respuestas de consulta `GET`, y la activación correcta de los códigos de estado `404 Not Found` (recursos inexistentes) y `409 Conflict` (asociaciones duplicadas).
+```
+//----------------------
+### MOVEMENTS/TAGS
+//----------------------
+
+### POST add tag to movement 
+POST http://localhost:3000/api/movements/677294c1-8f16-4638-a862-22dedd44fa36/tags
+Content-Type: application/json
+
+{
+    "tagId": "54c863b9-15f1-46af-8d3b-fcfb08526cde"
+}
+
+### DELETE remove tag from movement
+DELETE http://localhost:3000/api/movements/677294c1-8f16-4638-a862-22dedd44fa36/tags/54c863b9-15f1-46af-8d3b-fcfb08526cde
+```
