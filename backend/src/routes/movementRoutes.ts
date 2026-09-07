@@ -6,7 +6,7 @@ import { MovementController } from "../controllers/MovementControllers.js"
 const router = Router()
 
 //POST MOVEMENT
-router.post("/", 
+router.post("/",
     body('type')
         .notEmpty()
         .bail()
@@ -60,6 +60,24 @@ router.delete("/:id",
         .withMessage("the movement ID must be a valid UUID"),
     handleInputErrors,
     MovementController.deleteMovement
+)
+
+// ADD TAG TO MOVEMENT
+router.post("/:id/tags",
+    param("id").isUUID().withMessage("The movement ID must be a valid UUID"),
+    body("tagId")
+        .notEmpty().withMessage("tagId is required")
+        .isUUID().withMessage("tagId must be a valid UUID"),
+    handleInputErrors,
+    MovementController.addTagToMovement
+)
+
+// REMOVE TAG FROM MOVEMENT
+router.delete("/:id/tags/:tagId",
+    param("id").isUUID().withMessage("The movement ID must be a valid UUID"),
+    param("tagId").isUUID().withMessage("The tag ID must be a valid UUID"),
+    handleInputErrors,
+    MovementController.removeTagFromMovement
 )
 
 export default router

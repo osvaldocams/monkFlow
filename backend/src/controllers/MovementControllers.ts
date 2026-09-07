@@ -12,7 +12,7 @@ interface CreateMovementInput {
 }
 
 export class MovementController {
-    static createMovement = async (req: Request<{}, {}, CreateMovementInput>,res: Response) => {
+    static createMovement = async (req: Request<{}, {}, CreateMovementInput>, res: Response) => {
         try {
             const { type, amount, incomeAccountId, expenseAccountId, description, date } = req.body
 
@@ -21,7 +21,7 @@ export class MovementController {
             // 🚀 Iniciamos la transacción interactiva de Prisma
             // 'tx' actúa como nuestro cliente de base de datos aislado para esta operación
             const movement = await prisma.$transaction(async (tx) => {
-                
+
                 // 1️⃣ Crear el registro del movimiento
                 const newMovement = await tx.movement.create({
                     data: {
@@ -88,24 +88,32 @@ export class MovementController {
     static getAllMovements = async (req: Request, res: Response) => {
         try {
             const movements = await prisma.movement.findMany({
-                include:{
-                    incomeAccount:{
-                        select:{
-                            id:true,
-                            name:true,
-                            kind:true
+                include: {
+                    incomeAccount: {
+                        select: {
+                            id: true,
+                            name: true,
+                            kind: true
                         }
                     },
-                    expenseAccount:{
-                        select:{
-                            id:true,
-                            name:true,
-                            kind:true
+                    expenseAccount: {
+                        select: {
+                            id: true,
+                            name: true,
+                            kind: true
+                        }
+                    },
+                    tags: {
+                        select: {
+                            id: true,
+                            name: true,
+                            slug: true,
+                            color: true
                         }
                     }
                 },
-                orderBy:{
-                    date:'desc'
+                orderBy: {
+                    date: 'desc'
                 }
             })
             res.status(200).json(movements)
@@ -122,19 +130,27 @@ export class MovementController {
 
             const movement = await prisma.movement.findUnique({
                 where: { id },
-                include:{
-                    incomeAccount:{
-                        select:{
-                            id:true,
-                            name:true,
-                            kind:true
+                include: {
+                    incomeAccount: {
+                        select: {
+                            id: true,
+                            name: true,
+                            kind: true
                         }
                     },
-                    expenseAccount:{
-                        select:{
-                            id:true,
-                            name:true,
-                            kind:true
+                    expenseAccount: {
+                        select: {
+                            id: true,
+                            name: true,
+                            kind: true
+                        }
+                    },
+                    tags: {
+                        select: {
+                            id: true,
+                            name: true,
+                            slug: true,
+                            color: true
                         }
                     }
                 },
@@ -142,12 +158,12 @@ export class MovementController {
             if (!movement) {
                 return res.status(404).json({ error: "Movement not found" })
             }
-        
+
             res.status(200).json(movement)
-        } 
+        }
         catch (error) {
             console.error(error)
-            res.status(500).json({ errors: [{"msg": "Error fetching movement"}] })
+            res.status(500).json({ errors: [{ "msg": "Error fetching movement" }] })
         }
     }
     static deleteMovement = async (req: Request, res: Response) => {
@@ -155,61 +171,61 @@ export class MovementController {
             const { id } = req.params as { id: string }
 
             //1)inicia transacción interactiva de Prisma
-            const result = await prisma.$transaction(async(tx) =>{
+            const result = await prisma.$transaction(async (tx) => {
                 //2)verificar que el movimiento existe
                 const movement = await tx.movement.findUnique({
-                    where:{id}
+                    where: { id }
                 })
-                if(!movement){
+                if (!movement) {
                     throw new Error("Movement not found")
                 }
                 const { type, amount, incomeAccountId, expenseAccountId } = movement
                 const absAmount = Math.abs(amount.toNumber()) // Convertimos Decimal a number y tomamos el valor absoluto
-                
+
                 //3)Chequeos defensivos de integridad (adaptados a las relaciones opcionales)
-                if(['INCOME', 'TRANSFER', 'DEPOSIT'].includes(type) && !incomeAccountId){
+                if (['INCOME', 'TRANSFER', 'DEPOSIT'].includes(type) && !incomeAccountId) {
                     throw new Error("Income account missing in movement")
                 }
                 if (["EXPENSE", "TRANSFER", "WITHDRAWAL"].includes(type) && !expenseAccountId) {
-                throw new Error("Expense account missing in movement")
+                    throw new Error("Expense account missing in movement")
                 }
 
                 //4)Revertir el impacto del movimiento según su tipo
-                switch (type){
+                switch (type) {
                     case 'INCOME':
                         await tx.account.update({
-                            where:{id: incomeAccountId!},
-                            data:{ balance: { decrement: absAmount } }
+                            where: { id: incomeAccountId! },
+                            data: { balance: { decrement: absAmount } }
                         })
                         break
                     case 'EXPENSE':
                         await tx.account.update({
-                            where:{id: expenseAccountId!},
-                            data:{ balance: { increment: absAmount } }
+                            where: { id: expenseAccountId! },
+                            data: { balance: { increment: absAmount } }
                         })
                         break
                     case 'TRANSFER':
                     case 'DEPOSIT':
                     case 'WITHDRAWAL':
                         await tx.account.update({
-                            where:{id: expenseAccountId!},
-                            data:{ balance: { increment: absAmount } }
+                            where: { id: expenseAccountId! },
+                            data: { balance: { increment: absAmount } }
                         })
                         await tx.account.update({
-                            where:{id: incomeAccountId!},
-                            data:{ balance: { decrement: absAmount } }
+                            where: { id: incomeAccountId! },
+                            data: { balance: { decrement: absAmount } }
                         })
                         break
                 }
                 //5)Eliminar el movimiento
                 await tx.movement.delete({
-                    where:{id}
+                    where: { id }
                 })
                 return { message: "Movement deleted successfully" }
             })
             //6)Si todo salió bien, Prisma hizo COMMIT automático y respondemos al cliente
             return res.json(result)
-        } catch (error:any) {
+        } catch (error: any) {
             console.error(error)
             // Manejamos el error específico del 404 o bad request
             if (error.message === "Movement not found") {
@@ -223,5 +239,72 @@ export class MovementController {
                 errors: [{ msg: "Error deleting movement" }]
             })
         }
+    }
+    static addTagToMovement = async (req: Request<{ id: string }, {}, { tagId: string }>, res: Response) => {
+        try {
+            const { id } = req.params
+            const { tagId } = req.body
+
+            const movement = await prisma.movement.findUnique({ where: { id } })
+            if (!movement) {
+                return res.status(404).json({ error: 'Movement not found' })
+            }
+
+            const tag = await prisma.tag.findUnique({ where: { id: tagId } })
+            if (!tag) {
+                return res.status(404).json({ error: 'Tag not found' })
+            }
+
+            const alreadyAssociated = await prisma.movement.findFirst({
+                where: { id, tags: { some: { id: tagId } } }
+            })
+            if (alreadyAssociated) {
+                return res.status(409).json({ error: 'Tag is already associated to this movement' })
+            }
+
+            await prisma.movement.update({
+                where: { id },
+                data: { tags: { connect: { id: tagId } } }
+            })
+
+            res.status(200).json({ message: `Tag '${tag.name} added to movement` })
+        } catch (error) {
+            console.log(error)
+            res.status(500).json({ error: 'Error adding tag to movement' })
+        }
+    }
+    static removeTagFromMovement = async (req: Request<{ id: string; tagId: string }>, res: Response) => {
+        try {
+            const { id, tagId } = req.params
+
+            const movement = await prisma.movement.findUnique({ where: { id } })
+            if (!movement) {
+                return res.status(404).json({ error: 'Movement not found' })
+            }
+
+            const tag = await prisma.tag.findUnique({ where: { id: tagId } })
+            if (!tag) {
+                return res.status(404).json({ error: 'Tag not found' })
+            }
+
+            const isAssociated = await prisma.movement.findFirst({
+                where: { id, tags: { some: { id: tagId } } }
+            })
+            if (!isAssociated) {
+                return res.status(404).json({ error: 'Tag is not associated to this movement' })
+            }
+
+            await prisma.movement.update({
+                where: { id },
+                data: { tags: { disconnect: { id: tagId } } }
+            })
+
+            res.status(200).json({ message: `Tag '${tag.name}' removed from movement` })
+
+        } catch (error) {
+            console.log(error)
+            res.status(500).json({ error: 'Error removing tag from movement' })
+        }
+
     }
 }
