@@ -36,6 +36,13 @@ router.post("/",
         .optional()
         .isUUID()
         .withMessage("The account ID must be a valid UUID"),
+    body('tagIds')
+        .optional()
+        .isArray()
+        .withMessage('tagIds must be an array'),
+    body('tagIds.*')
+        .isUUID()
+        .withMessage('Each tag ID must be a valid UUID'),
     handleInputErrors,
     validateMovementLogic,
     normalizeAmount,
