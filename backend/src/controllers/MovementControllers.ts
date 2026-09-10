@@ -9,12 +9,13 @@ interface CreateMovementInput {
     date?: Date
     incomeAccountId?: string
     expenseAccountId?: string
+    tagIds?: string[]
 }
 
 export class MovementController {
     static createMovement = async (req: Request<{}, {}, CreateMovementInput>, res: Response) => {
         try {
-            const { type, amount, incomeAccountId, expenseAccountId, description, date } = req.body
+            const { type, amount, incomeAccountId, expenseAccountId, description, date, tagIds } = req.body
 
             // Recuerda: req.body.amount ya viene validado, positivo y a 2 decimales gracias a los middlewares
 
@@ -31,6 +32,9 @@ export class MovementController {
                         date: date ? new Date(date) : undefined,
                         incomeAccountId,
                         expenseAccountId
+                    },
+                    include: {
+                        tags: true
                     }
                 })
 
@@ -65,6 +69,17 @@ export class MovementController {
                             data: { balance: { increment: amount } }
                         })
                         break
+                }
+
+                if (tagIds && tagIds.length > 0) {
+                    await tx.movement.update({
+                        where: { id: newMovement.id },
+                        data: {
+                            tags: {
+                                connect: tagIds.map((id) => ({ id }))
+                            }
+                        }
+                    })
                 }
 
                 // Retornamos el movimiento creado para que salga de la transacción

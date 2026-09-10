@@ -11,6 +11,7 @@ interface CreateMovementInput {
     date?: Date
     incomeAccountId?: string
     expenseAccountId?: string
+    tagIds?: string[]
 }
 
 export const handleInputErrors = (req: Request, res: Response, next: NextFunction) => {
@@ -22,8 +23,8 @@ export const handleInputErrors = (req: Request, res: Response, next: NextFunctio
 }
 
 export const normalizeAmount = (
-    req: Request<{}, {}, CreateMovementInput>, 
-    res: Response, 
+    req: Request<{}, {}, CreateMovementInput>,
+    res: Response,
     next: NextFunction
 ) => {
     let { amount } = req.body
@@ -52,12 +53,12 @@ export const validateMovementLogic = async (
         if (!incomeAccountId) return error("incomeAccountId is required for INCOME type")
         if (expenseAccountId) return error("expenseAccountId is not allowed for INCOME type")
     }
-    
+
     if (type === 'EXPENSE') {
         if (!expenseAccountId) return error("expenseAccountId is required for EXPENSE type")
         if (incomeAccountId) return error("incomeAccountId is not allowed for EXPENSE type")
     }
-    
+
     if (['TRANSFER', 'WITHDRAWAL', 'DEPOSIT'].includes(type)) {
         if (!incomeAccountId || !expenseAccountId) {
             return error("Both incomeAccountId and expenseAccountId are required for this movement type")
