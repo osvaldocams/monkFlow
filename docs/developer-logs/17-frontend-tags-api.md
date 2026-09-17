@@ -19,3 +19,11 @@
    - Integración de **validación en tiempo de ejecución con Zod**: Parseamos la respuesta (`response.data`) utilizando `tagListSchema.safeparse()` para garantizar que el tipo de dato recibido coincida estrictamente con el contrato esperado en el frontend antes de entregarse a la capa de UI.
    - Centralizamos la captura y propagación de excepciones delegando los fallos al helper `handleApiError(error, "Error fetching tags")`.
 
+---
+
+**[2026-09-17] - hook useTags**
+
+1. 1. **Abstracción de Estado con React Query (`useTags.ts`):** Creamos el hook personalizado `useTags` adhiriéndonos a la arquitectura de consumo de datos establecida en los módulos de cuentas y movimientos:
+   - Implementamos la consulta de lectura utilizando `useQuery` con la clave de caché dedicada (`queryKey: ['tags']`).
+   - Sincronizamos la función de consulta (`queryFn`) con el método `TagAPI.getTags`, beneficiándonos del re-use del caché, manejo de estados de carga (`isLoading`, `isError`) y sincronización automática en segundo plano.
+   - Retornamos los estados y la información parseada de las etiquetas para su consumo limpio desde los componentes de la interfaz de usuario (como el selector de tags en el formulario de movimientos).
