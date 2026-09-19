@@ -27,3 +27,23 @@
    - Implementamos la consulta de lectura utilizando `useQuery` con la clave de caché dedicada (`queryKey: ['tags']`).
    - Sincronizamos la función de consulta (`queryFn`) con el método `TagAPI.getTags`, beneficiándonos del re-use del caché, manejo de estados de carga (`isLoading`, `isError`) y sincronización automática en segundo plano.
    - Retornamos los estados y la información parseada de las etiquetas para su consumo limpio desde los componentes de la interfaz de usuario (como el selector de tags en el formulario de movimientos).
+
+--- 
+
+**[2026-09-19] - TagPicker component**
+
+1. **Creación y Modularización del Componente (`TagPicker.tsx`):**
+   - Estructuramos `TagPicker` como un componente funcional independiente para desacoplar la UI de etiquetas del formulario principal de movimientos.
+   - Consumimos el hook personalizado `useTags` para consultar la lista de etiquetas disponibles provista por el backend (`TagAPI`).
+
+2. **Manejo de Estados de Carga y Vaciado (UX Layout):**
+   - Agregamos estados intermedios para renderizar fallbacks de carga (`isLoading`) y mensajes cuando no existen registros (`!tags.length`), evitando saltos bruscos de maquetado (*Layout Shift*).
+
+3. **Integración con `react-hook-form` y Selección Múltiple:**
+   - Vinculamos el componente con `useFormContext` extrayendo `watch` y `setValue` sobre el campo `"tags"`.
+   - Implementamos `handleToggleTag` para alternar los IDs seleccionados (`selectedTagIds`) dentro del arreglo global del formulario, forzando la revalidación (`shouldValidate: true`).
+   - Mapeamos las píldoras (pills) aplicando estilos condicionales y dinamismo visual (color de fondo mediante `tag.color` e iconos de estado) según el valor de `isSelected`.
+
+4. finalmente renderizamos el componete en nuestro formulario `MovementForm.tsx` en la seccion correspondiente a los tags.
+
+

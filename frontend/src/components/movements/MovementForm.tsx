@@ -4,6 +4,7 @@ import { useFormContext, useWatch } from "react-hook-form"
 import { MOVEMENT_TYPES } from "@/constants/movementTypes"
 import { useAccounts } from "@/hooks/useAccounts"
 import { useEffect, useMemo } from "react"
+import TagPicker from "./TagPicker"
 
 export default function MovementForm() {
 
@@ -78,9 +79,11 @@ export default function MovementForm() {
 
             {/* Tag (Dummy temporal) */}
             <div>
-                tags
+                <label className="block text-sm font-medium text-obsidian mb-2">
+                    Etiquetas
+                </label>
+                <TagPicker />
             </div>
-
             {/* Date and Amount */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
