@@ -82,7 +82,7 @@ export default function MovementForm() {
                 <label className="block text-sm font-medium text-obsidian mb-2">
                     Etiquetas
                 </label>
-                <TagPicker />
+                <TagPicker onCreateTag={() => { }} />
             </div>
             {/* Date and Amount */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

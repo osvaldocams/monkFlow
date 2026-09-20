@@ -45,5 +45,18 @@
    - Mapeamos las píldoras (pills) aplicando estilos condicionales y dinamismo visual (color de fondo mediante `tag.color` e iconos de estado) según el valor de `isSelected`.
 
 4. finalmente renderizamos el componete en nuestro formulario `MovementForm.tsx` en la seccion correspondiente a los tags.
+--- 
 
 
+**[2026-09-20] - Desacoplamiento de Acción de Creación en `TagPicker.tsx`**
+
+1. **Definición de Interfaz y Props (`TagPickerProps`):**
+   - Agregamos la interfaz `TagPickerProps` declarando la propiedad opcional `onCreateTag?: () => void`.
+   - Mantenemos la responsabilidad del estado del modal fuera del `TagPicker`, delegando la apertura hacia el componente contenedor (`MovementForm`).
+
+2. **Renderizado de Acción Secundaria:**
+   - Envolvimos el retorno del componente en un *React Fragment* para posicionar el botón de *"Crear Tag"* justo debajo de la grilla de píldoras.
+   - Condicionamos la visibilidad del botón a la presencia de la prop `onCreateTag`, permitiendo que el selector sea reutilizable en contextos de solo lectura o filtrado.
+
+3. **Integración Inicial en `MovementForm`:**
+   - Conectamos `TagPicker` dentro de `MovementForm` pasando la prop `onCreateTag` con un handler temporal (`() => {}`), dejando lista la estructura para recibir la lógica de control del modal.
