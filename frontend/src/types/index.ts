@@ -21,6 +21,21 @@ export type Account = z.infer<typeof accountSchema>
 export type AccountList = z.infer<typeof accountListSchema>
 
 // ==========================================
+// ESQUEMAS TAG
+// ==========================================
+export const tagSchema = z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    slug: z.string(),
+    color: z.string(),
+})
+
+export const tagListSchema = z.array(tagSchema)
+
+export type Tag = z.infer<typeof tagSchema>
+export type TagList = z.infer<typeof tagListSchema>
+
+// ==========================================
 // 🔥 ESQUEMAS MOVEMENT
 // ==========================================
 export const movementTypeSchema = z.enum(["INCOME", "EXPENSE", "DEPOSIT", "WITHDRAWAL", "TRANSFER"], {
@@ -41,66 +56,66 @@ export const movementFormSchema = z.object({
     expenseAccountId: z.string().optional().or(z.literal("")),
     tags: z.array(z.string()).default([])
 })
-// Lógica de negocio cruzada (Se ejecuta después de validar los tipos base)
-.superRefine((data, ctx) => {
-    
-    // 🟩 REGLA: INCOME (Ingreso) -> Requiere cuenta destino
-    if (data.type === "INCOME" && (!data.incomeAccountId || data.incomeAccountId === "")) {
-        ctx.addIssue({
-            path: ['incomeAccountId'],
-            message: 'La cuenta de ingresos (destino) es obligatoria',
-            code: z.ZodIssueCode.custom
-        })
-    }
+    // Lógica de negocio cruzada (Se ejecuta después de validar los tipos base)
+    .superRefine((data, ctx) => {
 
-    // 🟥 REGLA: EXPENSE (Gasto) -> Requiere cuenta origen
-    if (data.type === "EXPENSE" && (!data.expenseAccountId || data.expenseAccountId === "")) {
-        ctx.addIssue({
-            path: ['expenseAccountId'],
-            message: 'La cuenta de egresos (origen) es obligatoria',
-            code: z.ZodIssueCode.custom
-        })
-    }
-
-    // 🔄 REGLA: TRANSFER, DEPOSIT, WITHDRAWAL -> Requieren ambas cuentas
-    if (["TRANSFER", "DEPOSIT", "WITHDRAWAL"].includes(data.type)) {
-        if (!data.incomeAccountId || data.incomeAccountId === "") {
+        // 🟩 REGLA: INCOME (Ingreso) -> Requiere cuenta destino
+        if (data.type === "INCOME" && (!data.incomeAccountId || data.incomeAccountId === "")) {
             ctx.addIssue({
                 path: ['incomeAccountId'],
-                message: 'La cuenta de destino es obligatoria para este movimiento',
-                code: z.ZodIssueCode.custom,
+                message: 'La cuenta de ingresos (destino) es obligatoria',
+                code: z.ZodIssueCode.custom
             })
         }
-        if (!data.expenseAccountId || data.expenseAccountId === "") {
+
+        // 🟥 REGLA: EXPENSE (Gasto) -> Requiere cuenta origen
+        if (data.type === "EXPENSE" && (!data.expenseAccountId || data.expenseAccountId === "")) {
             ctx.addIssue({
                 path: ['expenseAccountId'],
-                message: 'La cuenta de origen es obligatoria para este movimiento',
-                code: z.ZodIssueCode.custom,
+                message: 'La cuenta de egresos (origen) es obligatoria',
+                code: z.ZodIssueCode.custom
             })
         }
-    }
 
-    // 🚫 REGLA: TRANSFER -> No pueden ser la misma cuenta
-    if (
-        data.type === 'TRANSFER' && 
-        data.incomeAccountId && 
-        data.expenseAccountId && 
-        data.incomeAccountId === data.expenseAccountId
-    ) {
-        ctx.addIssue({
-            path: ['expenseAccountId'],
-            message: 'La cuenta origen y destino no pueden ser la misma',
-            code: z.ZodIssueCode.custom
-        })
-    }
-})
-// 🧼 Transformación final: Lo que sale limpio hacia Axios para el Backend
-.transform((data) => ({
-    ...data,
-    description: data.description || undefined,
-    incomeAccountId: data.incomeAccountId === '' ? undefined : data.incomeAccountId ?? undefined,
-    expenseAccountId: data.expenseAccountId === '' ? undefined : data.expenseAccountId ?? undefined,
-}))
+        // 🔄 REGLA: TRANSFER, DEPOSIT, WITHDRAWAL -> Requieren ambas cuentas
+        if (["TRANSFER", "DEPOSIT", "WITHDRAWAL"].includes(data.type)) {
+            if (!data.incomeAccountId || data.incomeAccountId === "") {
+                ctx.addIssue({
+                    path: ['incomeAccountId'],
+                    message: 'La cuenta de destino es obligatoria para este movimiento',
+                    code: z.ZodIssueCode.custom,
+                })
+            }
+            if (!data.expenseAccountId || data.expenseAccountId === "") {
+                ctx.addIssue({
+                    path: ['expenseAccountId'],
+                    message: 'La cuenta de origen es obligatoria para este movimiento',
+                    code: z.ZodIssueCode.custom,
+                })
+            }
+        }
+
+        // 🚫 REGLA: TRANSFER -> No pueden ser la misma cuenta
+        if (
+            data.type === 'TRANSFER' &&
+            data.incomeAccountId &&
+            data.expenseAccountId &&
+            data.incomeAccountId === data.expenseAccountId
+        ) {
+            ctx.addIssue({
+                path: ['expenseAccountId'],
+                message: 'La cuenta origen y destino no pueden ser la misma',
+                code: z.ZodIssueCode.custom
+            })
+        }
+    })
+    // 🧼 Transformación final: Lo que sale limpio hacia Axios para el Backend
+    .transform((data) => ({
+        ...data,
+        description: data.description || undefined,
+        incomeAccountId: data.incomeAccountId === '' ? undefined : data.incomeAccountId ?? undefined,
+        expenseAccountId: data.expenseAccountId === '' ? undefined : data.expenseAccountId ?? undefined,
+    }))
 
 // El único tipo que vas a necesitar para registrar useForm<MovementFormData>
 export type MovementFormData = z.input<typeof movementFormSchema>
@@ -122,7 +137,7 @@ export const movementSchema = z.object({
     description: z.string().max(200, "La descripción es demasiado larga").optional(),
     incomeAccount: accountSchema.optional().nullable(),
     expenseAccount: accountSchema.optional().nullable(),
-    tags: z.array(z.string()).default([])
+    tags: z.array(tagSchema).default([])
 })
 
 export const movementListSchema = z.array(movementSchema)
