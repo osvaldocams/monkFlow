@@ -1,5 +1,6 @@
 import { TagAPI } from "@/api/TagAPI"
-import { useQuery } from "@tanstack/react-query"
+import type { CreateTagDto } from "@/types"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 
 //==============================================
@@ -17,3 +18,18 @@ export const useTags = () => {
         errorMessage: query.error instanceof Error ? query.error.message : null
     }
 }
+
+//==============================================
+//  hook para crear useTags
+//==============================================
+
+export const useCreateTags = () => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: (data: CreateTagDto) => TagAPI.createTag(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["tags"] })
+        }
+    })
+}
+

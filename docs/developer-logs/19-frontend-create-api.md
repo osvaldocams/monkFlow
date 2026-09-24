@@ -17,3 +17,18 @@
    - Renderizamos condicionalmente `<CreateTagModal onClose={closeCreateTag} />` al final del formulario de movimientos.
 
 ---
+
+**[2026-09-24] - API**
+
+1. **Definición del Contrato de Datos y Tipado (`createTagSchema`):**
+   - Creamos `createTagSchema` en `src/types/index.ts` asegurando la presencia obligatoria del nombre y validando el formato Hexadecimal (`/^#([0-9A-Fa-f]{6})$/`) para la propiedad `color` con un valor por defecto.
+   - Inferimos los tipos estáticos `CreateTagFormInputs` (`z.input`) para la entrada del formulario y `CreateTagDto` (`z.output`) para la carga útil que consume la API.
+
+2. **Implementación del Servicio HTTP (`TagAPI.createTag`):**
+   - Agregamos el método asíncrono `createTag` en `TagAPI.ts` para enviar peticiones `POST /tags`.
+   - Implementamos validación en tiempo de ejecución de la respuesta utilizando `tagSchema.safeParse(response)` antes de retornarla a la UI, delegando capturas de excepción al helper `handleApiError`.
+
+3. **Abstracción de Estado de Mutación y Revalidación de Caché (`useCreateTag`):**
+   - Construimos el custom hook `useCreateTag` en `src/hooks/useTags.ts` respaldado por `useMutation` de React Query.
+   - Configuramos el callback `onSuccess` ejecutando `queryClient.invalidateQueries({ queryKey: ['tags'] })`, lo que revalida automáticamente el listado en `TagPicker` al crear una nueva etiqueta sin recargar la página.
+
