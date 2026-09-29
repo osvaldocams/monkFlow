@@ -5,6 +5,8 @@ import { MOVEMENT_TYPES } from "@/constants/movementTypes"
 import { useAccounts } from "@/hooks/useAccounts"
 import { useEffect, useMemo } from "react"
 import TagPicker from "./TagPicker"
+import { useSearchParams } from "react-router-dom"
+import CreateTagModal from "@/components/ui/CreateTagModal"
 
 export default function MovementForm() {
 
@@ -56,6 +58,12 @@ export default function MovementForm() {
         setValue("expenseAccountId", "")
     }, [movementType, setValue])
 
+    const [searchParams, setSearchParams] = useSearchParams()
+    const isCreateTagOpen = searchParams.get("createTag") === "true"
+
+    const openCreateTag = () => setSearchParams({ createTag: "true" })
+    const closeCreateTag = () => setSearchParams({})
+
     return (
         <div className="space-y-5">
 
@@ -82,7 +90,7 @@ export default function MovementForm() {
                 <label className="block text-sm font-medium text-obsidian mb-2">
                     Etiquetas
                 </label>
-                <TagPicker onCreateTag={() => { }} />
+                <TagPicker onCreateTag={openCreateTag} />
             </div>
             {/* Date and Amount */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -167,6 +175,7 @@ export default function MovementForm() {
                 />
                 {errors.description && <p className="text-red-500 text-xs mt-1">{String(errors.description.message)}</p>}
             </div>
+            {isCreateTagOpen && <CreateTagModal onClose={closeCreateTag} />}
         </div>
     )
 }

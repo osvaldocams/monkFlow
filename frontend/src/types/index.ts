@@ -35,6 +35,15 @@ export const tagListSchema = z.array(tagSchema)
 export type Tag = z.infer<typeof tagSchema>
 export type TagList = z.infer<typeof tagListSchema>
 
+//create tags
+export const createTagSchema = z.object({
+    name: z.string().min(1, "El nombre del tag es obligatorio"),
+    color: z.string().regex(/^#([0-9A-Fa-f]{6})$/, "Color must be a valid hex color").default("#6B7280"),
+})
+
+export type CreateTagFormInputs = z.input<typeof createTagSchema>
+export type CreateTagDto = z.output<typeof createTagSchema>
+
 // ==========================================
 // 🔥 ESQUEMAS MOVEMENT
 // ==========================================
