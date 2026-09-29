@@ -3,6 +3,7 @@ import { useCreateTag } from "@/hooks/useTags"
 import { X } from "lucide-react"
 import { createTagSchema, type CreateTagFormInputs } from "@/types"
 import TagForm from "./TagForm"
+import { createPortal } from "react-dom"
 
 interface CreateTagModalProps {
     onClose: () => void
@@ -17,11 +18,11 @@ export default function CreateTagModal({ onClose }: CreateTagModalProps) {
             const cleanData = createTagSchema.parse(data)
             await createTag(cleanData)
             onClose()
-        } catch {
-            console.error(Error)
+        } catch (error) {
+            console.error(error)
         }
     }
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-obsidian/60 backdrop-blur-xs">
             {/* Overlay */}
             <div
@@ -48,7 +49,8 @@ export default function CreateTagModal({ onClose }: CreateTagModalProps) {
                     isPending={isPending}
                 />
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }
 

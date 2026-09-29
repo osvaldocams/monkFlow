@@ -33,7 +33,7 @@
    - Configuramos el callback `onSuccess` ejecutando `queryClient.invalidateQueries({ queryKey: ['tags'] })`, lo que revalida automáticamente el listado en `TagPicker` al crear una nueva etiqueta sin recargar la página.
 --- 
 
-    **[2026-09-28] - Separación de Responsabilidades: `CreateTagModal` y `TagForm`**
+**[2026-09-28] - Separación de Responsabilidades: `CreateTagModal` y `TagForm`**
 
 1. **Refactorización del Componente Orquestador (`CreateTagModal.tsx`):**
    - Separamos la lógica de orquestación (mutación de la API y control de estados) de la vista del formulario para mantener coherencia arquitectónica en el proyecto.
@@ -51,3 +51,11 @@
 
    --- 
 
+**[2026-09-28] - Corrección de Formularios Anidados con React Portals (`CreateTagModal.tsx`)**
+
+1. **Resolución de Anidamiento en el DOM (*Nested Forms Issue*):**
+   - Identificamos un problema de jerarquía de marcado en el que `<CreateTagModal />` se renderizaba directamente dentro del arbol HTML de `<MovementForm />`, generando formularios `<form>` anidados (inválidos según la especificación de HTML5) y provocando disparos indeseados del formulario principal al presionar enter o submit.
+
+2. **Implementación de React Portal (`createPortal`):**
+   - Importamos `createPortal` desde `react-dom` dentro de `CreateTagModal.tsx`.
+   - Modificamos el retorno del componente para proyectar el marcado del modal directamente en el nodo `document.body`, fuera del árbol DOM del formulario de movimientos pero manteniendo el contexto de React intacto.
