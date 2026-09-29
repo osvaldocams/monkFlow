@@ -23,7 +23,7 @@ export const useTags = () => {
 //  hook para crear useTags
 //==============================================
 
-export const useCreateTags = () => {
+export const useCreateTag = () => {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: (data: CreateTagDto) => TagAPI.createTag(data),

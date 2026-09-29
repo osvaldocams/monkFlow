@@ -31,4 +31,23 @@
 3. **Abstracción de Estado de Mutación y Revalidación de Caché (`useCreateTag`):**
    - Construimos el custom hook `useCreateTag` en `src/hooks/useTags.ts` respaldado por `useMutation` de React Query.
    - Configuramos el callback `onSuccess` ejecutando `queryClient.invalidateQueries({ queryKey: ['tags'] })`, lo que revalida automáticamente el listado en `TagPicker` al crear una nueva etiqueta sin recargar la página.
+--- 
+
+    **[2026-09-28] - Separación de Responsabilidades: `CreateTagModal` y `TagForm`**
+
+1. **Refactorización del Componente Orquestador (`CreateTagModal.tsx`):**
+   - Separamos la lógica de orquestación (mutación de la API y control de estados) de la vista del formulario para mantener coherencia arquitectónica en el proyecto.
+   - Ejecutamos el custom hook `useCreateTag` extrayendo `mutateAsync` y `isPending`.
+   - Estructuramos la UI base con el modal wrapper (overlay, header con título y botón de cierre) y delegamos la captura de datos al componente hijo `<TagForm />` mediante props (`onSubmit`, `onCancel`, `isPending`).
+
+2. **Construcción del Componente Presentacional (`TagForm.tsx`):**
+   - Creamos `TagForm.tsx` tipando estrictamente su interfaz de propiedades para conectarlo de forma limpia con `CreateTagModal`.
+   - Integramos `react-hook-form` con `@hookform/resolvers/zod` enlazando `createTagSchema` y estableciendo los valores por defecto para `name` y `color`.
+
+3. **UX de Selección de Colores y Gestión del Formulario:**
+   - Definimos la paleta predeterminada `PRESET_COLORS` mapeando píldoras de color interactivas que actualizan el campo `"color"` mediante `setValue` (forzando `shouldValidate` y `shouldDirty`).
+   - Sincronizamos la vista del color activo mediante `watch("color")` e incluimos la representación visual junto al manejo de errores dinámico (`errors.color`).
+   - Construimos la sección de acciones con estados deshabilitados durante el proceso de guardado (`disabled={isPending}`) y retroalimentación visual condicional (`Guardando...` / `Crear Etiqueta`).
+
+   --- 
 
