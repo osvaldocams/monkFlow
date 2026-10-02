@@ -5,6 +5,7 @@ import DashboardView from "./views/DashboardView"
 import CreateMovementView from "./views/movements/CreateMovementView"
 import MovementView from "./views/movements/MovementView"
 import MovementDetailView from "./views/movements/MovementDetailView"
+import { ToastContainer } from "react-toastify"
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -19,6 +20,14 @@ export default function Router() {
     return (
         <QueryClientProvider client={queryClient}>
             <BrowserRouter>
+                <ToastContainer
+                    position="top-right"
+                    autoClose={3000}
+                    newestOnTop
+                    closeOnClick
+                    pauseOnHover
+                    theme="light"
+                />
                 <Routes>
                     <Route element={<AppLayout />}>
                         <Route path="/" element={<DashboardView />} index />
