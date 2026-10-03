@@ -5,9 +5,10 @@ import { useFormContext } from "react-hook-form"
 
 interface TagPickerProps {
     onCreateTag?: () => void
+    disabled?: boolean
 }
 
-export default function TagPicker({ onCreateTag }: TagPickerProps) {
+export default function TagPicker({ onCreateTag, disabled }: TagPickerProps) {
 
     const { watch, setValue } = useFormContext<MovementFormInputs>()
     const selectedTagIds = watch("tags") ?? []
@@ -35,12 +36,17 @@ export default function TagPicker({ onCreateTag }: TagPickerProps) {
                             key={tag.id}
                             type="button"
                             onClick={() => handleToggleTag(tag.id)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all 
                             ${isSelected
                                     ? 'border-transparent text-white'
                                     : 'border-green-balance text-obsidian hover:bg-sage-opaque'
                                 }
+                            ${disabled
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : 'cursor-pointer'
+                                }
                             `}
+                            disabled={disabled}
                             style={isSelected ? { backgroundColor: tag.color } : undefined}
                         >
                             <Tag className="w-3 h-3" />
@@ -52,7 +58,7 @@ export default function TagPicker({ onCreateTag }: TagPickerProps) {
                 }
             </div>
             {onCreateTag && (
-                <button type="button" onClick={onCreateTag} className="text-xs font-medium px-3 py-1.5 mt-2 border rounded-md cursor-pointer">
+                <button type="button" onClick={onCreateTag} disabled={disabled} className={`text-xs font-medium px-3 py-1.5 mt-2 border rounded-md ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                     <Plus className="w-3 h-3" />
                     Crear Tag
                 </button>

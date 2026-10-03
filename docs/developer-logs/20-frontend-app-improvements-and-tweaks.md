@@ -50,3 +50,50 @@
         }
         ```
 </details>
+
+--- 
+
+
+**[2026-10-02] Tag validation in MovementForm**
+
+<details>
+
+1. en MovementForm los inputs respetan el patrón `disabled={!movementType}` TagPicker aun no cuenta con esa validacion tanto los chips como el boton 'crear tag' el usuario puede seleccionar tag antes de definir movimiento, para el caso de los tags estos no deben resetearse al cambiar type como en el caso de las cuentas, por lo que el cambio se limita al estado disabled sin tocar lógica de datos.
+
+2. vamos al archivo MovementForm.tsx ya que necesitamos pasar via props el disabled por movementType
+    ```ts 
+    <TagPicker onCreateTag={openCreateTag} disabled={!movementType} />
+    ```
+3. vamos a TagPicker.tsx
+    - recibimos el props
+    ```tsx
+    interface TagPickerProps {
+    onCreateTag?: () => void
+    disabled?: boolean
+    }
+    ```
+    - desestructuramos props en la firma
+    ```tsx
+    export default function TagPicker({ onCreateTag, disabled }: TagPickerProps) {
+    ```
+    - trabajamos con los chips, agregamos en los className una codigo condicional dependiente de disabled, y agregamos el atributo disabled
+    ```tsx
+    ${disabled
+            ? 'opacity-50 cursor-not-allowed'
+            : 'cursor-pointer'
+        }
+    disabled={disabled}
+    ```
+    - damos al boton 'crear Tag el mismo tratamiento'
+    ```tsx
+    <button
+    type="button"
+    onClick={onCreateTag}
+    disabled={disabled}
+    className={`text-xs font-medium px-3 py-1.5 mt-2 border rounded-md
+        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+    `}
+>
+    ```
+
+</details>
