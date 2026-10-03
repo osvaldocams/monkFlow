@@ -97,3 +97,50 @@
     ```
 
 </details>
+
+--- 
+
+**[2026-10-03] Refactor TagPicker rediseño boton 'crear tag' y fix empty state**
+
+<details>
+
+1. el primer paso es eliminar el empty state ya que este no renderiza el botón 'crear tag' tendremos un empty state pero lo tendremos dentro de un div pricipal y lo mostraremos de forma condicional al resto del componente. La linea a eliminar:
+    ```tsx 
+    if (!tags?.length) return <p className="text-sm text-clay-gray">No hay tags disponibles</p>
+
+    ```
+2. cambiamos los fragments por un div en este contendremos en mensaje de estado vacio (condicional) y un contenedor flex con los chips y el boton 
+    ```tsx 
+    return (
+        <div>
+            {/* Mensaje de estado vacío — antes era un return temprano que ocultaba el botón */}
+            {!tags?.length && (
+                <p className="text-sm text-clay-gray mb-2">
+                    No hay tags disponibles todavía
+                </p>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+                {tags?.map(tag => {
+    ```
+3. finalmente creamos un nuevo diseño para el boton 'crear tag' dentro del mismo flex container la principal diferencia es que ahora este botón es una chip mas del grupo y no un bloque aparte y ya tiene elementos de interaccion como hovers y focus.
+    ```tsx
+    {onCreateTag && (
+        <button
+            type="button"
+            onClick={onCreateTag}
+            disabled={disabled}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-dashed transition-all
+                ${disabled
+                    ? 'border-clay-gray text-clay-gray opacity-50 cursor-not-allowed'
+                    : 'border-green-balance text-green-balance hover:bg-sage-opaque focus-visible:ring-2 focus-visible:ring-green-balance focus-visible:ring-offset-1 cursor-pointer'
+                }
+                `}
+            >
+                <Plus className="w-3 h-3" />
+                    Crear Tag
+        </button>
+    )}
+    ```
+
+</details>

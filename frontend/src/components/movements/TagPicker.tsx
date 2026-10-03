@@ -23,13 +23,16 @@ export default function TagPicker({ onCreateTag, disabled }: TagPickerProps) {
     }
 
     if (isLoading) return <p className="text-sm text-clay-gray">cargando tags...</p>
-    if (!tags?.length) return <p className="text-sm text-clay-gray">No hay tags disponibles</p>
-
 
     return (
-        <>
+        <div>
+            {!tags?.length && (
+                <p className="text-sm text-clay-gray mb-2">
+                    No hay tags disponibles todavía
+                </p>
+            )}
             <div className="flex flex-wrap gap-2">
-                {tags.map(tag => {
+                {tags?.map(tag => {
                     const isSelected = selectedTagIds.includes(tag.id)
                     return (
                         <button
@@ -53,17 +56,25 @@ export default function TagPicker({ onCreateTag, disabled }: TagPickerProps) {
                             {tag.name}
                         </button>
                     )
-                })
-
-                }
+                })}
+                {onCreateTag && (
+                    <button
+                        type="button"
+                        onClick={onCreateTag}
+                        disabled={disabled}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-dashed transition-all
+                        ${disabled
+                                ? 'border-clay-gray text-clay-gray opacity-50 cursor-not-allowed'
+                                : 'border-green-balance text-green-balance hover:bg-sage-opaque focus-visible:ring-2 focus-visible:ring-green-balance focus-visible:ring-offset-1 cursor-pointer'
+                            }
+                        `}
+                    >
+                        <Plus className="w-3 h-3" />
+                        Crear Tag
+                    </button>
+                )}
             </div>
-            {onCreateTag && (
-                <button type="button" onClick={onCreateTag} disabled={disabled} className={`text-xs font-medium px-3 py-1.5 mt-2 border rounded-md ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
-                    <Plus className="w-3 h-3" />
-                    Crear Tag
-                </button>
-            )}
-        </>
+        </div>
 
     )
 }
