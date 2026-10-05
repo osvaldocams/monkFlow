@@ -144,3 +144,28 @@
     ```
 
 </details>
+
+
+**[2026-10-04] Bug TagPicker submit propagación**
+
+<details>
+
+1. se identificó un bug, al hacer el tag submit el evento se propagaba al formulario que tenia por encima MovementForm, se creaba un tag exitosa o erroneamente y los demas inputs del formulario movement se activaba la validación y mostraba el error, y es un comportamiento que hay que solucionar 
+
+2. vamos a nuestro archivo TagForm vamos a importar el type de nuestro evento submit
+    ```tsx
+    import type { SubmitEvent } from "react"
+    ```
+3. lo que vamos a hacer es crear una función aparte donde podamos manejar el evento y nuestra funcion submit, de manera que primero detenemos la propagación y segundo disparamos el submit 
+    ```tsx
+    const handleFormSubmit = (e: SubmitEvent<HTMLFormElement>) => {
+        e.stopPropagation()
+        handleSubmit(onSubmit)(e)
+    }
+    ```
+4. finalmente pasamo esa funcion al form 
+    ```tsx
+    <form onSubmit={handleFormSubmit} noValidate className="space-y-5">
+    ```
+
+</details>
