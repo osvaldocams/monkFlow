@@ -145,6 +145,7 @@
 
 </details>
 
+--- 
 
 **[2026-10-04] Bug TagPicker submit propagación**
 
@@ -169,3 +170,17 @@
     ```
 
 </details>
+
+--- 
+
+**[2026-10-04] TagForm eliminar text input**
+
+<details>
+
+1. eliminaremos de TagForm.tsx el bloque del input de texto que recibe codigo hexadecimal para colores personalizados por el usuario justificado bajo las siguientes razones:
+    - es una carga cognitiva extra para un usuario que quizá no tenga presente que es un codigo hexadecimal y no pueda decifrar la utilidad del input
+    - al añadir colores personalizados estaría rompiendo la armonia visual del diseño
+
+
+</details>
+

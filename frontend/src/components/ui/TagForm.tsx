@@ -66,19 +66,6 @@ export default function TagForm({ onSubmit, onCancel, isPending }: TagFormProps)
                         />
                     ))}
                 </div>
-                <div>
-                    <div
-                        className="w-8 h-8 rounded-lg border border-linen-light shrink-0"
-                        style={{ backgroundColor: selectedColor || "#6B7280" }}
-                    />
-                    <input
-                        type="text"
-                        placeholder="#6B7280"
-                        {...register("color")}
-                        className={`w-full px-3 py-1.5 text-xs uppercase font-mono bg-white border rounded-lg outline-none ${errors.color ? "border-red-500" : "border-linen-light focus:border-green-balance"
-                            }`}
-                    />
-                </div>
                 {errors.color && <p className="mt-1 text-xs text-red-500">{errors.color.message}</p>}
             </div>
 
