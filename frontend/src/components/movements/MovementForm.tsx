@@ -85,12 +85,12 @@ export default function MovementForm() {
                 </select>
             </div>
 
-            {/* Tag (Dummy temporal) */}
+            {/* Tag */}
             <div>
                 <label className="block text-sm font-medium text-obsidian mb-2">
                     Etiquetas
                 </label>
-                <TagPicker onCreateTag={openCreateTag} />
+                <TagPicker onCreateTag={openCreateTag} disabled={!movementType} />
             </div>
             {/* Date and Amount */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

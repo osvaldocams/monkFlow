@@ -26,3 +26,13 @@
     /* FONT FAMILIES */
     --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
+/* Toast notifications */
+.Toastify__toast--success {
+    background: var(--color-green-balance-opaque);
+    color: var(--color-obsidian);
+}
+
+.Toastify__toast--error {
+    background: var(--color-ritual-red-opaque);
+    color: var(--color-obsidian);
+}

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MovementAPI } from '@/api/MovementAPI'
 import type { CreateMovementDto, Movement } from '@/types'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 
 //==============================================
 //  hook para consultar lista de movimientos
@@ -44,9 +45,10 @@ export const useCreateMovement = () => {//3️⃣ creamos nuestro hook para la m
         mutationFn: (formData: CreateMovementDto) => MovementAPI.createMovement(formData),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["movements"] })
-            console.log("¡Movimiento creado con éxito en la base de datos!")
+            toast.success("Movimiento creado con éxito")
         },
         onError: (error) => {
+            toast.error(error.message)
             console.error("Error en la mutación:", error)
         }
     })
