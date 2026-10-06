@@ -282,7 +282,7 @@ export class MovementController {
                 data: { tags: { connect: { id: tagId } } }
             })
 
-            res.status(200).json({ message: `Tag '${tag.name} added to movement` })
+            res.status(200).json({ message: `Tag '${tag.name}' added to movement`, tag })
         } catch (error) {
             console.log(error)
             res.status(500).json({ error: 'Error adding tag to movement' })
@@ -314,7 +314,7 @@ export class MovementController {
                 data: { tags: { disconnect: { id: tagId } } }
             })
 
-            res.status(200).json({ message: `Tag '${tag.name}' removed from movement` })
+            res.status(200).json({ message: `Tag '${tag.name}' removed from movement`, tagId })
 
         } catch (error) {
             console.log(error)
