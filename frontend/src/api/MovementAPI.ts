@@ -1,5 +1,5 @@
 import api from "@/lib/axios"
-import { movementListSchema, movementSchema, type CreateMovementDto, type Movement, type MovementList } from "@/types"
+import { movementListSchema, movementSchema, tagSchema, type CreateMovementDto, type Movement, type MovementList, type Tag } from "@/types"
 import { handleApiError } from "./handleApiErrors"
 
 export const MovementAPI = {
@@ -59,5 +59,23 @@ export const MovementAPI = {
             //debuging for development only
             handleApiError(error, 'Error deleting movement', { id })
         }
+    },
+    addTagToMovement: async (movementId: Movement['id'], tagId: Tag['id']): Promise<Tag> => {
+        try {
+            const { data } = await api.post(`/movements/${movementId}/tags`, { tagId })
+            const result = tagSchema.safeParse(data.tag)
+            if (!result.success) throw new Error('invalid tag response format')
+            return result.data
+        } catch (error) {
+            handleApiError(error, 'Error adding tag to movement', { movementId, tagId })
+        }
+    },
+    removeTagFromMovement: async (movementId: Movement['id'], tagId: Tag['id']): Promise<void> => {
+        try {
+            await api.delete(`/movements/${movementId}/tags/${tagId}`)
+        } catch (error) {
+            handleApiError(error, 'Error removing tag from movement', { movementId, tagId })
+        }
     }
+
 }
