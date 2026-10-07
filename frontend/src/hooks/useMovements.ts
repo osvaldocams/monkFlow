@@ -1,8 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MovementAPI } from '@/api/MovementAPI'
-import type { CreateMovementDto, Movement } from '@/types'
+import type { CreateMovementDto, Movement, Tag } from '@/types'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
+
+interface MovementTagVars {
+    movementId: Movement['id']
+    tagId: Tag['id']
+}
 
 //==============================================
 //  hook para consultar lista de movimientos
@@ -74,3 +79,37 @@ export const useDeleteMovement = () => {
         }
     })
 }
+//==============================================
+//  hook para agregar o eliminar tags de los movimientos
+//==============================================
+export const useAddTagToMovement = () => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({ movementId, tagId }: MovementTagVars) =>
+            MovementAPI.addTagToMovement(movementId, tagId),
+        onSuccess: (tag, { movementId }) => {
+            queryClient.setQueryData<Movement>(['movements', 'detail', movementId], old =>
+                old ? { ...old, tags: [...old.tags, tag] } : old
+            )
+            queryClient.invalidateQueries({ queryKey: ['movements', 'list'] })
+            toast.success("Etiqueta añadida al movimiento")
+        },
+        onError: (error) => toast.error(error.message)
+    })
+}
+export const useRemoveTagFromMovement = () => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({ movementId, tagId }: MovementTagVars) =>
+            MovementAPI.removeTagFromMovement(movementId, tagId),
+        onSuccess: (_data, { movementId, tagId }) => {
+            queryClient.setQueryData<Movement>(['movements', 'detail', movementId], (old) =>
+                old ? { ...old, tags: old.tags.filter(t => t.id !== tagId) } : old
+            )
+            queryClient.invalidateQueries({ queryKey: ['movements', 'list'] })
+            toast.success('Etiqueta eliminada del movimiento')
+        },
+        onError: (error) => toast.error(error.message)
+    })
+}
+
