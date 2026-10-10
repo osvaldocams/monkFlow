@@ -15,7 +15,7 @@ interface MovementTagVars {
 
 export const useMovements = () => {
     const query = useQuery({ //1️⃣​
-        queryKey: ['movements'],
+        queryKey: ['movements', 'list'],
         queryFn: MovementAPI.getMovements
     })
     return {
@@ -30,7 +30,7 @@ export const useMovements = () => {
 
 export const useMovementById = (movementId: Movement['id']) => {
     const query = useQuery({
-        queryKey: ['movements', movementId],
+        queryKey: ['movements', 'detail', movementId],
         queryFn: () => MovementAPI.getMovementById(movementId),
         enabled: !!movementId
     })

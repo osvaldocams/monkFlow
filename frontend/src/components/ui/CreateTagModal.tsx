@@ -1,22 +1,24 @@
 
 import { useCreateTag } from "@/hooks/useTags"
 import { X } from "lucide-react"
-import { createTagSchema, type CreateTagFormInputs } from "@/types"
+import { createTagSchema, type CreateTagFormInputs, type Tag } from "@/types"
 import TagForm from "./TagForm"
 import { createPortal } from "react-dom"
 
 interface CreateTagModalProps {
     onClose: () => void
+    onCreated?: (tag: Tag) => void
 }
 
-export default function CreateTagModal({ onClose }: CreateTagModalProps) {
+export default function CreateTagModal({ onClose, onCreated }: CreateTagModalProps) {
 
     const { mutateAsync: createTag, isPending } = useCreateTag()
 
     const handleSubmit = async (data: CreateTagFormInputs) => {
         try {
             const cleanData = createTagSchema.parse(data)
-            await createTag(cleanData)
+            const newTag = await createTag(cleanData)
+            onCreated?.(newTag)
             onClose()
         } catch (error) {
             console.error(error)

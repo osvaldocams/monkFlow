@@ -97,7 +97,7 @@ export default function MovementDetailView() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
 
                             {/* fecha */}
-                            <div className="flex items-star gap-3 p-4 bg-gray-50 rounded-50">
+                            <div className="flex items-star gap-3 p-4 bg-gray-50 rounded-lg">
                                 <div className="shrink-0 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
                                     <Calendar className="w-5 h-5 text-obsidian" />
                                 </div>
