@@ -4,7 +4,8 @@ import { formatCurrency } from "@/helpers/formatCurrency";
 import { formatDate } from "@/helpers/formatDate";
 import { useDeleteMovement, useMovementById } from "@/hooks/useMovements";
 import type { MovementType } from "@/types";
-import { AlertCircle, ArrowLeft, Calendar, Plus, Tag, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Calendar, Trash2 } from "lucide-react";
+import MovementTagsSection from "@/components/movements/MovementTagsSection"
 import { useParams } from "react-router-dom";
 
 export default function MovementDetailView() {
@@ -152,19 +153,7 @@ export default function MovementDetailView() {
                         <hr className="border-clay-gray" />
 
                         {/* seccion de tags */}
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-2 text-obsidian">
-                                    <Tag className="w-5 h-5" />
-                                    <span className="font-semibold text-base">Etiquetas</span>
-                                </div>
-                                <button className="flex items-center gap-1.5 text-xs sm:text-sm text-green-balance font-bold cursor-pointer hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
-                                    <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                    Añadir
-                                </button>
-                            </div>
-                            {/* parte pendiente */}
-                        </div>
+                        <MovementTagsSection movementId={movement.id} tags={movement.tags} />
 
                         <hr className="border-clay-gray" />
 

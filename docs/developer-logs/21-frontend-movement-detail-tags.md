@@ -160,3 +160,11 @@
    - Integramos el modal `<CreateTagModal />` pasando la propiedad `onCreated={handleTagCreated}`, lo que permite crear una nueva etiqueta y asociarla automáticamente al movimiento en un solo flujo continuo.
 
 </details>
+
+--- 
+
+**[2026-10-21] - Integración de `MovementTagsSection` en `MovementDetailView.tsx`**
+
+1. **Montaje del Componente de Etiquetas:**
+   - Integramos el componente `<MovementTagsSection movementId={movement.id} tags={movement.tags} />` dentro de la vista de detalle de movimientos.
+   - Con esto queda conectada de extremo a extremo la capacidad de asociar, desvincular y crear etiquetas de forma interactiva directamente desde el detalle individual del movimiento.
