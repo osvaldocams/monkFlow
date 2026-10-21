@@ -143,3 +143,20 @@
 </details>
 
 --- 
+
+**[2026-10-21] Componente de Gestión Interactiva de Etiquetas (`MovementTagsSection.tsx`)**
+
+<details>
+
+1. **Gestión Granular e Interactiva de Etiquetas:**
+   - Creamos el componente `MovementTagsSection` para la vista de detalle de movimientos (`MovementDetailView`), separando la visualización estática de la interacción activa.
+   - Implementamos las acciones para adjuntar (`handleAttach`) y desvincular (`handleDetach`) etiquetas en tiempo real invocando los hooks `useAddTagToMovement` y `useRemoveTagFromMovement`.
+
+2. **Manejo Fino de Estados de Carga (*Feedback Visual*):**
+   - Incorporamos el estado local `pendingTagId` para aislar el indicador de carga (`Loader2` animado) únicamente en el *chip* de la etiqueta que está siendo procesada, evitando deshabilitar o mostrar spinners en todo el grupo.
+
+3. **Cálculo Derivado y Creación Directa:**
+   - Calculamos dinámicamente la lista de etiquetas no asignadas (`unassigned`) filtrando el universo completo de tags (`useTags`) contra los tags vinculados al movimiento.
+   - Integramos el modal `<CreateTagModal />` pasando la propiedad `onCreated={handleTagCreated}`, lo que permite crear una nueva etiqueta y asociarla automáticamente al movimiento en un solo flujo continuo.
+
+</details>
