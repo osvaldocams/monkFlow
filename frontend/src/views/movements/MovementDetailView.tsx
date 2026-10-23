@@ -4,7 +4,8 @@ import { formatCurrency } from "@/helpers/formatCurrency";
 import { formatDate } from "@/helpers/formatDate";
 import { useDeleteMovement, useMovementById } from "@/hooks/useMovements";
 import type { MovementType } from "@/types";
-import { AlertCircle, ArrowLeft, Calendar, Plus, Tag, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Calendar, Trash2 } from "lucide-react";
+import MovementTagsSection from "@/components/movements/MovementTagsSection"
 import { useParams } from "react-router-dom";
 
 export default function MovementDetailView() {
@@ -97,7 +98,7 @@ export default function MovementDetailView() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
 
                             {/* fecha */}
-                            <div className="flex items-star gap-3 p-4 bg-gray-50 rounded-50">
+                            <div className="flex items-star gap-3 p-4 bg-gray-50 rounded-lg">
                                 <div className="shrink-0 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
                                     <Calendar className="w-5 h-5 text-obsidian" />
                                 </div>
@@ -152,19 +153,7 @@ export default function MovementDetailView() {
                         <hr className="border-clay-gray" />
 
                         {/* seccion de tags */}
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-2 text-obsidian">
-                                    <Tag className="w-5 h-5" />
-                                    <span className="font-semibold text-base">Etiquetas</span>
-                                </div>
-                                <button className="flex items-center gap-1.5 text-xs sm:text-sm text-green-balance font-bold cursor-pointer hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
-                                    <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                    Añadir
-                                </button>
-                            </div>
-                            {/* parte pendiente */}
-                        </div>
+                        <MovementTagsSection movementId={movement.id} tags={movement.tags} />
 
                         <hr className="border-clay-gray" />
 
