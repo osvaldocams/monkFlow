@@ -153,3 +153,26 @@ export const movementListSchema = z.array(movementSchema)
 
 export type MovementList = z.infer<typeof movementListSchema>
 export type Movement = z.infer<typeof movementSchema>
+
+
+// ==========================================
+// 🔥 DASHBOARD SCHEMAS 
+// ==========================================
+//scheamas para parametros de intervalo
+export const dashboardIntervalSchema = z.enum(['week', 'month'])
+export type DashboardInterval = z.infer<typeof dashboardIntervalSchema>
+
+//schemas para las metricas financieras
+export const dashboardSummaryMetricsSchema = z.object({
+    income: z.number(),
+    expense: z.number(),
+    balance: z.number(),
+})
+
+//schema completo para la respuesta del endpoint GET /api/dashboard/summary 
+export const dashboardSummaryResponseSchema = z.object({
+    interval: dashboardIntervalSchema,
+    summary: dashboardSummaryMetricsSchema,
+    movementsCount: z.number(),
+})
+export type DashboardSummaryResponse = z.infer<typeof dashboardSummaryResponseSchema>
