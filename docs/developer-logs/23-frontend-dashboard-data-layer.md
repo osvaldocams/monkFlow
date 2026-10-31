@@ -30,6 +30,20 @@
 2. **Validación Segura con Zod:**
    - Integramos la validación estricta de la respuesta utilizando `dashboardSummaryResponseSchema.parse(response.data)`, asegurando que los datos cumplan con el contrato esperado antes de ser consumidos por la interfaz.
 
+</details>
+
+--- 
+
+**[2026-10-31] custom hook useDashboardSummary react-query hook**
+
+<details>
+
+1. **Gestión de Estado Remoto con React Query:**
+   - Creamos el hook `useDashboardSummary` utilizando `useQuery` para conectar la interfaz con el servicio `DashboardAPI`.
+   - Configuramos una query key dinámica (`['dashboard-summary', interval]`) para aislar la caché y los estados de carga entre la vista semanal y mensual.
+
+2. **Optimización de Rendimiento:**
+   - Establecimos un `staleTime` de 5 minutos y desactivamos el refetch automático al enfocar la ventana (`refetchOnWindowFocus: false`) para evitar peticiones redundantes sin comprometer la frescura de los datos financieros.
 
 </details>
 
