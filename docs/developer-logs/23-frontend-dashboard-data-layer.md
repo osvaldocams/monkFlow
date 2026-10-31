@@ -18,3 +18,18 @@
 </details>
 
 --- 
+
+**[2026-10-29] dashboard api service**
+
+<details>
+
+1. **Implementación de Capa de Servicios:**
+   - Creamos el objeto `DashboardAPI` encargado de realizar las peticiones HTTP al backend de MonkFlow.
+   - Añadimos el método `getSummary` que acepta el parámetro de intervalo tipado (`DashboardInterval`) y se comunica con la ruta `/dashboard/summary`.
+
+2. **Validación Segura con Zod:**
+   - Integramos la validación estricta de la respuesta utilizando `dashboardSummaryResponseSchema.parse(response.data)`, asegurando que los datos cumplan con el contrato esperado antes de ser consumidos por la interfaz.
+
+
+</details>
+
