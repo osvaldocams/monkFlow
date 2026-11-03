@@ -285,3 +285,20 @@ export class DashboardControllers {
 </details>
 
 ---
+
+**[2026-11-03] Invalidación del dashboard tras mutar movimientos**
+
+<details>
+
+1. **Creación y eliminación:**
+   - `useCreateMovement` y `useDeleteMovement` ahora invalidan `['dashboard-summary']` junto con `['movements']` y `['accounts']`, así el resumen y el gráfico se refetchean después de cada cambio.
+
+2. **Prefix matching:**
+   - La key del dashboard es `['dashboard-summary', interval]`; invalidar `['dashboard-summary']` sin `exact` cubre `week` y `month` a la vez, e ignora el `staleTime` de 5 minutos.
+
+3. **Alcance:**
+   - Las mutaciones de tags no invalidan el dashboard porque no alteran `income`, `expense` ni `balance`. En creación se añadió también `['accounts']`, que faltaba y dejaba el balance desactualizado.
+
+</details>
+
+---
