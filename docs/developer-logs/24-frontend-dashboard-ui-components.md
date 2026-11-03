@@ -268,3 +268,20 @@ export class DashboardControllers {
 </details>
 
 ---
+
+**[2026-11-03] AccountAPI con balance de cuentas**
+
+<details>
+
+1. **Validación con el nuevo schema:**
+   - `getAccounts` ahora parsea con `accountBalanceListSchema`, así que cada cuenta llega como `AccountBalance` e incluye `balance`. Mantenemos `safeParse` con el mensaje `"invalid account format"` en lugar de `parse`.
+
+2. **Contrato de retorno:**
+   - Tipamos explícitamente `Promise<AccountBalanceList>`. Como `handleApiError` retorna `never`, el `catch` no necesita `return` y React Query infiere `AccountBalanceList | undefined` en `useAccounts`.
+
+3. **Sin cambios en consumidores:**
+   - `useAccounts` y `MovementForm` siguen igual: el formulario usa `id`, `name` y `kind`, e ignora `balance`. `movementSchema` conserva `accountSchema` (sin balance) para las cuentas anidadas en un movimiento.
+
+</details>
+
+---
