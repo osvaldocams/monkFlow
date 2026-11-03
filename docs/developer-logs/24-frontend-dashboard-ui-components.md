@@ -251,3 +251,20 @@ export class DashboardControllers {
    - Los buckets se calculan en hora local del servidor; un movimiento cerca de medianoche puede caer en el día vecino si el cliente está en otra zona horaria.
 
 ---
+
+**[2026-11-03] Esquemas de tendencia y balance de cuentas**
+
+<details>
+
+1. **Serie temporal del dashboard:**
+   - Añadimos `dashboardTrendPointSchema` con `label`, `income`, `expense` y `net`, y lo componemos en la respuesta como `trend: z.array(dashboardTrendPointSchema)`. El tipo `DashboardSummaryResponse` ahora incluye `trend` por inferencia.
+
+2. **Balance de cuentas:**
+   - Creamos `accountBalanceSchema` extendiendo `accountSchema` con `balance: z.coerce.number()`, más `accountBalanceListSchema`. No tocamos el schema base porque `movementSchema` lo reutiliza sin el campo `balance`.
+
+3. **Tipado derivado:**
+   - Exportamos `DashboardTrendPoint`, `AccountBalance` y `AccountBalanceList` con `z.infer`, manteniendo los tipos sincronizados con sus validaciones.
+
+</details>
+
+---

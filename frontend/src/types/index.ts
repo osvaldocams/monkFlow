@@ -20,6 +20,15 @@ export const accountListSchema = z.array(accountSchema)
 export type Account = z.infer<typeof accountSchema>
 export type AccountList = z.infer<typeof accountListSchema>
 
+//balances de las cuentas 
+export const accountBalanceSchema = accountSchema.extend({
+    balance: z.coerce.number(),
+})
+export const accountBalanceListSchema = z.array(accountBalanceSchema)
+
+export type AccountBalance = z.infer<typeof accountBalanceSchema>
+export type AccountBalanceList = z.infer<typeof accountBalanceListSchema>
+
 // ==========================================
 // ESQUEMAS TAG
 // ==========================================
@@ -168,11 +177,19 @@ export const dashboardSummaryMetricsSchema = z.object({
     expense: z.number(),
     balance: z.number(),
 })
+export const dashboardTrendPointSchema = z.object({
+    label: z.string(),
+    income: z.number(),
+    expense: z.number(),
+    net: z.number(),
+})
+export type DashboardTrendPoint = z.infer<typeof dashboardTrendPointSchema>
 
 //schema completo para la respuesta del endpoint GET /api/dashboard/summary 
 export const dashboardSummaryResponseSchema = z.object({
     interval: dashboardIntervalSchema,
     summary: dashboardSummaryMetricsSchema,
     movementsCount: z.number(),
+    trend: z.array(dashboardTrendPointSchema)
 })
 export type DashboardSummaryResponse = z.infer<typeof dashboardSummaryResponseSchema>
