@@ -319,3 +319,20 @@ export class DashboardControllers {
 </details>
 
 ---
+
+**[2026-11-03] Tarjetas de resumen del dashboard**
+
+<details>
+
+1. **Componente presentacional:**
+   - `SummaryCards` recibe `data` (resumen del periodo) y `accounts` (balances) y delega el markup a un subcomponente `Card`. No usa hooks, así que `DashboardView` sigue siendo el contenedor de los datos.
+
+2. **Valores derivados:**
+   - El balance total se calcula con `reduce` sobre `accounts.balance` (stock), mientras ingresos, gastos y balance del periodo salen de `data.summary` (flujo). `movementsCount` y `accounts.length` alimentan los subtítulos.
+
+3. **Presentación:**
+   - Grid responsivo `1 → 2 → 4`, tarjetas con tokens del tema (`bg-white`, `border-linen-light`, `shadow-md`) y color semántico: verde para ingresos, rojo para gastos y saldos negativos. `tabular-nums` alinea las cifras y `formatCurrency` centraliza el formato.
+
+</details>
+
+---
