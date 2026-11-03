@@ -336,3 +336,20 @@ export class DashboardControllers {
 </details>
 
 ---
+
+**[2026-11-03] Gráfico de tendencia del dashboard**
+
+<details>
+
+1. **Componente presentacional:**
+   - `TrendChart` recibe `trend` e `interval`; no usa hooks, así `DashboardView` seguirá inyectando `data.trend`. Incluye early-return cuando `trend` está vacío.
+
+2. **Barras agrupadas con Recharts:**
+   - `BarChart` con dos `Bar` (`income` y `expense`), grid solo horizontal, ejes sin líneas y leyenda. El `Tooltip` va dentro del `BarChart` para acceder al store de Recharts, y el `ResponsiveContainer` vive en un contenedor `h-72` para no medir 0.
+
+3. **Estilo y formato:**
+   - Colores hex alineados a los tokens (`#6a994e` y `#d00000`), `maxBarSize` y `radius` para las barras, y tooltip con `formatCurrency(Number(value ?? 0))`. El backend ya entrega los buckets zero-filled y redondeados.
+
+</details>
+
+---
