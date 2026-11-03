@@ -1,5 +1,4 @@
 import type { DashboardInterval } from '@/types'
-import React from 'react'
 
 
 interface DashboardIntervalPickerProps {
@@ -8,16 +7,19 @@ interface DashboardIntervalPickerProps {
 }
 
 
-export default function DashboardIntervalPicker({ value, onChange, }: DashboardIntervalPickerProps): React.JSX.Element {
+export default function DashboardIntervalPicker({ value, onChange, }: DashboardIntervalPickerProps) {
+
+    const base = 'px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-balance focus-visible:ring-offset-1'
+    const active = 'bg-green-balance text-linen-light shadow-sm'
+    const inactive = 'text-obsidian hover:bg-sage-opaque'
+
     return (
-        <div className="inline-flex items-center p-1 bg-zinc-900/80 border border-zinc-800 rounded-full backdrop-blur-sm">
+        <div className="inline-flex items-center gap-1 p-1 bg-white border border-linen-light rounded-full" role="group" aria-label="Intervalo del dashboard">
             <button
                 type='button'
                 onClick={() => onChange('week')}
-                className={`px-3 py-1 text-xs font-medium rounded-full transition-all duration-200 ease-in-out ${value === 'week'
-                        ? 'bg-zinc-800 text-zinc-100 shadow-sm border border-zinc-700/50'
-                        : 'text-zinc-400 hover:text-zinc-200'
-                    }`}
+                className={`${base} ${value === 'week' ? active : inactive}`}
+                aria-pressed={value === 'week'}
             >
                 Semana
             </button>
@@ -25,10 +27,8 @@ export default function DashboardIntervalPicker({ value, onChange, }: DashboardI
             <button
                 type='button'
                 onClick={() => onChange('month')}
-                className={`px-3 py-1 text-xs font-medium rounded-full transition-all duration-200 ease-in-out ${value === 'month'
-                        ? 'bg-zinc-800 text-zinc-100 shadow-sm border border-zinc-700/50'
-                        : 'text-zinc-400 hover:text-zinc-200'
-                    }`}
+                className={`${base} ${value === 'month' ? active : inactive}`}
+                aria-pressed={value === 'month'}
             >
                 Mes
             </button>

@@ -302,3 +302,20 @@ export class DashboardControllers {
 </details>
 
 ---
+
+**[2026-11-03] Restyle del selector de intervalo**
+
+<details>
+
+1. **Paleta del tema:**
+   - Sustituimos los `zinc-*` y el `backdrop-blur` por tokens del `@theme`: contenedor `bg-white border-linen-light`, activo `bg-green-balance text-linen-light` e inactivo `text-obsidian hover:bg-sage-opaque`.
+
+2. **Clases compartidas:**
+   - Extraemos `base`, `active` e `inactive` para no duplicar cadenas entre los dos botones y usamos `transition-colors` en lugar de `transition-all`. Añadimos `focus-visible:ring-green-balance` para teclado.
+
+3. **Accesibilidad y limpieza:**
+   - El contenedor lleva `role="group"` y `aria-label`, y cada botón `aria-pressed`. Quitamos el `import React` y la anotación `React.JSX.Element`, innecesarios con `jsx: react-jsx`.
+
+</details>
+
+---
