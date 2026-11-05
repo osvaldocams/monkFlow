@@ -50,6 +50,8 @@ export const useCreateMovement = () => {//3️⃣ creamos nuestro hook para la m
         mutationFn: (formData: CreateMovementDto) => MovementAPI.createMovement(formData),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["movements"] })
+            queryClient.invalidateQueries({ queryKey: ["accounts"] })
+            queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] })
             toast.success("Movimiento creado con éxito")
         },
         onError: (error) => {
@@ -71,6 +73,7 @@ export const useDeleteMovement = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["movements"] })
             queryClient.invalidateQueries({ queryKey: ["accounts"] })
+            queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] })
             console.log("¡Movimiento creado con éxito en la base de datos!")
             navigate('/movements')
         },
