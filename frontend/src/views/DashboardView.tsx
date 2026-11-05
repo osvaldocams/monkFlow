@@ -3,6 +3,7 @@ import type { DashboardInterval } from "@/types"
 import { useDashboardSummary } from "@/hooks/useDashboardSummary"
 import { useAccounts } from "@/hooks/useAccounts"
 import DashboardIntervalPicker from "@/components/dashboard/DashboardIntervalPicker"
+import AccountBalances from "@/components/dashboard/AccountBalances"
 import SummaryCards from "@/components/dashboard/SummaryCards"
 import TrendChart from "@/components/dashboard/TrendChart"
 import { formatDate } from "@/helpers/formatDate"
@@ -51,6 +52,7 @@ export default function DashboardView() {
                 </div>
             ) : summaryQuery.data && accountsQuery.data ? (
                 <>
+                    <AccountBalances accounts={accountsQuery.data} />
                     <SummaryCards data={summaryQuery.data} accounts={accountsQuery.data} />
                     <TrendChart trend={summaryQuery.data.trend} interval={interval} />
                 </>

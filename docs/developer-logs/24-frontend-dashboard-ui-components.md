@@ -370,3 +370,20 @@ export class DashboardControllers {
 </details>
 
 ---
+
+**[2026-11-05] Lista de cuentas del dashboard**
+
+<details>
+
+1. **Componente presentacional:**
+   - `AccountBalances` recibe `AccountBalanceList` y no usa hooks. `DashboardView` lo renderiza como primer hijo del bloque de éxito, justo debajo del header y antes de `SummaryCards`, reutilizando `accountsQuery.data` sin query nueva.
+
+2. **Fila por cuenta:**
+   - Cada fila muestra un icono según `kind` (`Banknote` para `CASH`, `Landmark` para `BANK`), la etiqueta `Efectivo`/`Banco`, el nombre truncado y el saldo a la derecha con `formatCurrency`, `tabular-nums` y rojo para negativos. El orden A-Z se calcula sobre una copia para no mutar las props.
+
+3. **Casos borde:**
+   - Empty state con mensaje cuando no hay cuentas, contador singular/plural en el header y actualización automática gracias a la invalidación existente de `['accounts']` en las mutaciones.
+
+</details>
+
+---
