@@ -353,3 +353,20 @@ export class DashboardControllers {
 </details>
 
 ---
+
+**[2026-11-05] Vista del dashboard**
+
+<details>
+
+1. **Contenedor de datos:**
+   - `DashboardView` reemplaza el smoke test (`useMovements` + `<pre>`) por el estado `interval` (`'month'` por defecto) y las queries `useDashboardSummary(interval)` y `useAccounts()`. El header con saludo por hora y el picker quedan fuera del render condicional para poder cambiar de intervalo aun cargando.
+
+2. **Estados combinados:**
+   - Loading y error se combinan con `||` porque la vista necesita ambas respuestas; el mensaje prioriza `summaryQuery.error.message` y cae al `errorMessage` de `useAccounts`. El guard `summaryQuery.data && accountsQuery.data` estrecha los tipos antes de pasarlos a `SummaryCards` y `TrendChart`.
+
+3. **Layout heredado:**
+   - La vista usa solo `space-y-6`; `AppLayout` ya aporta ancho máximo, padding y fondo. Se eliminaron `p-6`, `min-h-screen` y `bg-stone-50` del smoke test. No se añaden movimientos recientes en esta fase.
+
+</details>
+
+---
