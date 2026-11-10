@@ -1,6 +1,6 @@
 # SDD: Reset Database (development only)
 
-- **Estado:** Fases 0-5 y 6.1 implementadas; pendiente prueba positiva de reset y cierre
+- **Estado:** Fases 0-5 y 6.1 implementadas; Fase 7 documentada; pendiente prueba positiva manual
 - **Fecha:** 2026-11-08
 - **Rama sugerida:** `feature/reset-db`
 - **Alcance:** backend únicamente
