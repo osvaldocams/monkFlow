@@ -22,6 +22,24 @@ export const handleInputErrors = (req: Request, res: Response, next: NextFunctio
     next();
 }
 
+export const requireDevelopment = (req: Request, res: Response, next: NextFunction) => {
+    if (process.env.NODE_ENV !== 'development') {
+        return res.status(403).json({
+            error: 'Reset endpoint is only available in development environment'
+        })
+    }
+    next()
+}
+
+export const requireResetConfirmation = (req: Request, res: Response, next: NextFunction) => {
+    if (req.header('x-confirm-reset') !== 'true') {
+        return res.status(400).json({
+            error: 'Missing or invalid confirmation header: x-confirm-reset'
+        })
+    }
+    next()
+}
+
 export const normalizeAmount = (
     req: Request<{}, {}, CreateMovementInput>,
     res: Response,
