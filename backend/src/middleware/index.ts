@@ -31,6 +31,15 @@ export const requireDevelopment = (req: Request, res: Response, next: NextFuncti
     next()
 }
 
+export const requireResetConfirmation = (req: Request, res: Response, next: NextFunction) => {
+    if (req.header('x-confirm-reset') !== 'true') {
+        return res.status(400).json({
+            error: 'Missing or invalid confirmation header: x-confirm-reset'
+        })
+    }
+    next()
+}
+
 export const normalizeAmount = (
     req: Request<{}, {}, CreateMovementInput>,
     res: Response,

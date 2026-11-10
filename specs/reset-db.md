@@ -1,6 +1,6 @@
 # SDD: Reset Database (development only)
 
-- **Estado:** Propuesto, pendiente de aprobación
+- **Estado:** Fases 0-5 y 6.1 implementadas; pendiente prueba positiva de reset y cierre
 - **Fecha:** 2026-11-08
 - **Rama sugerida:** `feature/reset-db`
 - **Alcance:** backend únicamente
@@ -81,6 +81,8 @@ Reglas:
 - El middleware responde `403` y no ejecuta ninguna consulta a Prisma.
 - El controlador no repite la validación; la responsabilidad vive en un único punto.
 
+La Fase 6.1 agrega una segunda capa independiente, `requireResetConfirmation`, que exige el header `x-confirm-reset: true` (ver 5.7).
+
 ### 5.3 Orden de borrado
 
 Orden obligatorio dentro de la transacción:
@@ -115,6 +117,16 @@ Se descarta `TRUNCATE ... CASCADE` con SQL crudo porque:
 
 Se devuelve `200` con los conteos eliminados. No se devuelve `204` porque los conteos ayudan a verificar el reset desde el cliente HTTP.
 
+### 5.7 Header de confirmación
+
+Además del guard de entorno, el endpoint exige el header `x-confirm-reset: true`.
+
+- Es una confirmación deliberada, no un secreto.
+- En navegadores, un header personalizado obliga a un preflight CORS, lo que reduce el riesgo de peticiones simples accidentales o CSRF.
+- No sustituye al guard de entorno: primero se valida `NODE_ENV` y luego la confirmación.
+- Valor exacto: `true`. Cualquier otro valor o la ausencia del header responde `400`.
+- Un cliente que conozca el header puede enviarlo; la protección real contra ejecución accidental es que la acción debe declararse explícitamente.
+
 ---
 
 ## 6. Contrato HTTP
@@ -124,9 +136,10 @@ Se devuelve `200` con los conteos eliminados. No se devuelve `204` porque los co
 ```http
 POST /api/dev/reset
 Content-Type: application/json
+x-confirm-reset: true
 ```
 
-Sin body, sin parámetros y sin autenticación.
+Sin body ni parámetros. Requiere el header de confirmación; no es autenticación.
 
 ### 6.2 Respuesta exitosa
 
@@ -165,6 +178,18 @@ Sin body, sin parámetros y sin autenticación.
 
 El detalle real del error se registra solo en consola con `console.error`, siguiendo el patrón existente de los controladores.
 
+### 6.5 Confirmación faltante o inválida
+
+**Status:** `400 Bad Request`
+
+```json
+{
+  "error": "Missing or invalid confirmation header: x-confirm-reset"
+}
+```
+
+Se usa `400` porque la petición está mal formada. El `403` queda reservado para el bloqueo por entorno. El controlador no se ejecuta.
+
 ---
 
 ## 7. Diseño de componentes
@@ -175,6 +200,22 @@ El detalle real del error se registra solo en consola con `console.error`, sigui
 - **Firma:** `(req: Request, res: Response, next: NextFunction) => void`.
 - **Responsabilidad:** bloquear la petición si `process.env.NODE_ENV !== 'development'`.
 - **Ubicación en la cadena:** antes del controlador, en la definición de la ruta.
+
+### 7.1.1 Middleware `requireResetConfirmation`
+
+- **Archivo:** `backend/src/middleware/index.ts` (agregar exportación).
+- **Firma:** `(req: Request, res: Response, next: NextFunction) => void`.
+- **Responsabilidad:** exigir `req.header('x-confirm-reset') === 'true'`; si falta o es distinto, responder `400`.
+- **Ubicación en la cadena:** después de `requireDevelopment` y antes del controlador.
+
+```ts
+// Implementado en backend/src/middleware/index.ts
+if (req.header('x-confirm-reset') !== 'true') {
+    return res.status(400).json({
+        error: 'Missing or invalid confirmation header: x-confirm-reset'
+    })
+}
+```
 
 ### 7.2 Controlador `DevControllers.resetDatabase`
 
@@ -209,8 +250,8 @@ const deleted = await prisma.$transaction(async (tx) => {
 ### 7.3 Router `devRoutes.ts`
 
 - **Archivo nuevo:** `backend/src/routes/devRoutes.ts`.
-- **Contenido:** un único `router.post('/reset', requireDevelopment, DevControllers.resetDatabase)`.
-- **Imports:** `express`, `requireDevelopment` desde `../middleware/index.js`, `DevControllers` desde `../controllers/DevControllers.js`.
+- **Contenido:** un único `router.post('/reset', requireDevelopment, requireResetConfirmation, DevControllers.resetDatabase)`.
+- **Imports:** `express`, `requireDevelopment` y `requireResetConfirmation` desde `../middleware/index.js`, `DevControllers` desde `../controllers/DevControllers.js`.
 
 ### 7.4 Montaje en `server.ts`
 
@@ -222,12 +263,12 @@ const deleted = await prisma.$transaction(async (tx) => {
 
 | Archivo | Tipo | Cambio |
 | --- | --- | --- |
-| `backend/src/middleware/index.ts` | Modificar | Exportar `requireDevelopment` |
+| `backend/src/middleware/index.ts` | Modificar | Exportar `requireDevelopment` y `requireResetConfirmation` |
 | `backend/src/controllers/DevControllers.ts` | Nuevo | Controlador de reset |
-| `backend/src/routes/devRoutes.ts` | Nuevo | Router `/reset` |
+| `backend/src/routes/devRoutes.ts` | Nuevo | Router `/reset` con ambos guards |
 | `backend/src/server.ts` | Modificar | Montar `/api/dev` |
 | `backend/.env` | Local, ignorado | Agregar `NODE_ENV=development` |
-| `backend/requests.http` | Local, ignorado | Agregar request de reset |
+| `backend/requests.http` | Local, ignorado | Agregar request de reset con `x-confirm-reset: true` |
 | `docs/developer-logs/26-reset-db.md` | Opcional | Bitácora de la fase |
 
 ---
@@ -356,6 +397,20 @@ Cada fase es independiente y debe aprobarse antes de continuar.
   5. Probar el bloqueo con `NODE_ENV` distinto de `development`.
 - **Criterio de aceptación:** ver sección 11.
 
+### Fase 6.1: Header de confirmación `x-confirm-reset`
+
+- **Archivos:** `backend/src/middleware/index.ts`, `backend/src/routes/devRoutes.ts`, `backend/requests.http` (local, ignorado).
+- **Pasos:**
+  1. Agregar `requireResetConfirmation` en `middleware/index.ts`.
+  2. Encadenarlo después de `requireDevelopment` en `POST /reset`.
+  3. Agregar `x-confirm-reset: true` al request local.
+  4. Reejecutar las pruebas manuales de la Fase 6.
+- **Criterio de aceptación:**
+  - Sin header o con valor distinto: `400` y base intacta.
+  - Con header correcto y `NODE_ENV=development`: `200`.
+  - Con header correcto pero `NODE_ENV` distinto de `development`: `403`.
+- **Rollback:** quitar el middleware de la cadena y el header del request.
+
 ### Fase 7: Verificación final y cierre
 
 - **Archivos:** `docs/developer-logs/26-reset-db.md` (opcional).
@@ -383,11 +438,13 @@ No hay suite de tests en el proyecto; la verificación es manual + compilación.
 
 | Caso | Preparación | Resultado esperado |
 | --- | --- | --- |
-| Reset con datos | `NODE_ENV=development`, datos creados | `200` y conteos mayores que cero |
-| Tablas ya vacías | Segundo reset consecutivo | `200` y conteos en cero |
-| Movimiento con tags | Crear movimiento con `tagIds` | Reset sin error de FK |
-| Bloqueo en producción | `NODE_ENV=production` | `403`, base intacta |
-| `NODE_ENV` ausente | Sin definir la variable | `403`, base intacta |
+| Reset con datos | `NODE_ENV=development`, datos creados, header `x-confirm-reset: true` | `200` y conteos mayores que cero |
+| Tablas ya vacías | Segundo reset consecutivo con header válido | `200` y conteos en cero |
+| Movimiento con tags | Crear movimiento con `tagIds`, header válido | Reset sin error de FK |
+| Confirmación faltante | Sin header `x-confirm-reset` | `400`, base intacta |
+| Confirmación inválida | `x-confirm-reset: false` u otro valor | `400`, base intacta |
+| Bloqueo en producción | `NODE_ENV=production`, header válido | `403`, base intacta |
+| `NODE_ENV` ausente | Sin definir la variable, header válido | `403`, base intacta |
 | Verificación posterior | `GET /api/accounts`, `/api/movements`, `/api/tags` | Arreglos vacíos |
 
 ### 11.3 Comandos de referencia
@@ -398,6 +455,9 @@ pnpm -C backend dev
 
 # Simular producción para probar el bloqueo
 NODE_ENV=production pnpm -C backend dev
+
+# Reset con confirmación (destructivo)
+curl -X POST -H 'x-confirm-reset: true' http://localhost:3000/api/dev/reset
 
 # Verificar tablas vacías
 curl http://localhost:3000/api/accounts
@@ -411,6 +471,9 @@ curl http://localhost:3000/api/tags
 
 - [ ] `POST /api/dev/reset` responde `200` solo con `NODE_ENV=development`.
 - [ ] Responde `403` si `NODE_ENV` es distinto de `development` o no está definido.
+- [ ] Sin `x-confirm-reset: true` responde `400` y no ejecuta el reset.
+- [ ] Con `x-confirm-reset: true` y `NODE_ENV=development` responde `200`.
+- [ ] El header no sustituye al guard de entorno: el `403` por entorno tiene prioridad.
 - [ ] El bloqueo ocurre antes de cualquier consulta a Prisma.
 - [ ] El borrado respeta el orden `movements -> accounts -> tags`.
 - [ ] La operación es atómica mediante transacción.
@@ -434,14 +497,16 @@ curl http://localhost:3000/api/tags
 | Orden de borrado incorrecto | Error de FK `Restrict` | Respetar `movements -> accounts -> tags` |
 | Falla a mitad del proceso | Estado parcial | Transacción interactiva |
 | Endpoint visible en producción | Superficie de ataque | Respuesta `403` sin ejecutar lógica; opcionalmente se puede montar el router solo en desarrollo |
+| Header de confirmación conocido | No protege contra un cliente local deliberado | Es una confirmación, no un secreto; para protección real usar token en variable de entorno |
 
 ### Endurecimiento futuro opcional
 
 No forma parte de esta fase, pero puede evaluarse después:
 
-- Exigir un header de confirmación (`x-confirm-reset: true`).
+- Exigir un token secreto en el header, leído de una variable de entorno.
 - Exigir una variable adicional (`ALLOW_DB_RESET=true`).
 - Montar el router condicionalmente solo cuando `NODE_ENV === 'development'`.
+- Agregar un error handler que devuelva `403` para orígenes CORS rechazados.
 
 ---
 
@@ -451,9 +516,10 @@ No forma parte de esta fase, pero puede evaluarse después:
 ### RESET DATABASE (DEV ONLY)
 POST http://localhost:3000/api/dev/reset
 Content-Type: application/json
+x-confirm-reset: true
 ```
 
-En Postman: método `POST`, URL `http://localhost:3000/api/dev/reset`, sin body y sin autenticación.
+También funciona vía `http://localhost:5173/api/dev/reset` cuando Vite está corriendo, porque proxya `/api` hacia el backend. En Postman: método `POST`, URL `http://localhost:3000/api/dev/reset`, header `x-confirm-reset: true`, sin body y sin autenticación.
 
 ---
 
@@ -463,4 +529,5 @@ En Postman: método `POST`, URL `http://localhost:3000/api/dev/reset`, sin body 
 2. Aprobar y ejecutar Fase 1 (entorno).
 3. Aprobar y ejecutar Fases 2 a 5 (código backend).
 4. Ejecutar Fase 6 (pruebas manuales).
-5. Ejecutar Fase 7 (verificación y cierre).
+5. Aprobar y ejecutar Fase 6.1 (header de confirmación).
+6. Ejecutar Fase 7 (verificación y cierre).
