@@ -1,6 +1,7 @@
 import { Router } from "express"
 import { body, param } from "express-validator"
 import { handleInputErrors, normalizeAmount, validateMovementLogic } from "../middleware/index.js"
+import { validateMovementQuery } from "../middleware/validateMovementQuery.js"
 import { MovementController } from "../controllers/MovementControllers.js"
 
 const router = Router()
@@ -50,7 +51,7 @@ router.post("/",
 )
 
 // GET ALL MOVEMENTS
-router.get('/', MovementController.getAllMovements)
+router.get('/', validateMovementQuery, MovementController.getAllMovements)
 
 // GET MOVEMENT BY ID
 router.get("/:id",
