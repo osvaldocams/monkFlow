@@ -1,9 +1,5 @@
 import type { Request, Response, NextFunction } from 'express'
-import { getMovementsQuerySchema, type GetMovementsQuery } from '../schemas/movementSchemas.js'
-
-export interface MovementQueryLocals {
-    validatedQuery: GetMovementsQuery
-}
+import { getMovementsQuerySchema } from '../schemas/movementSchemas.js'
 
 export const validateMovementQuery = (
     req: Request,
