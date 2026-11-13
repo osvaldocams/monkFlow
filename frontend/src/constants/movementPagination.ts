@@ -1,0 +1,2 @@
+export const MOVEMENTS_INITIAL_PAGE = 1
+export const MOVEMENTS_PAGE_SIZE = 20
