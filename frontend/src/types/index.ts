@@ -158,9 +158,21 @@ export const movementSchema = z.object({
     tags: z.array(tagSchema).default([])
 })
 
-export const movementListSchema = z.array(movementSchema)
+export const paginationMetaSchema = z.object({
+    total: z.number().int().nonnegative(),
+    page: z.number().int().positive(),
+    limit: z.number().int().positive(),
+    totalPages: z.number().int().nonnegative(),
+    hasMore: z.boolean(),
+})
 
-export type MovementList = z.infer<typeof movementListSchema>
+export const movementPageSchema = z.object({
+    data: z.array(movementSchema),
+    meta: paginationMetaSchema,
+})
+
+export type PaginationMeta = z.infer<typeof paginationMetaSchema>
+export type MovementPage = z.infer<typeof movementPageSchema>
 export type Movement = z.infer<typeof movementSchema>
 
 
