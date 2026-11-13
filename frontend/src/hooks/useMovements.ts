@@ -1,5 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MovementAPI } from '@/api/MovementAPI'
+import { MOVEMENTS_INITIAL_PAGE, MOVEMENTS_PAGE_SIZE } from '@/constants/movementPagination'
 import type { CreateMovementDto, Movement, Tag } from '@/types'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -14,12 +15,21 @@ interface MovementTagVars {
 //==============================================
 
 export const useMovements = () => {
-    const query = useQuery({ //1️⃣​
+    const query = useInfiniteQuery({
         queryKey: ['movements', 'list'],
-        queryFn: MovementAPI.getMovements
+        queryFn: ({ pageParam }) =>
+            MovementAPI.getMovements({
+                page: pageParam,
+                limit: MOVEMENTS_PAGE_SIZE,
+            }),
+        initialPageParam: MOVEMENTS_INITIAL_PAGE,
+        getNextPageParam: (lastPage) =>
+            lastPage.meta.hasMore
+                ? lastPage.meta.page + 1
+                : undefined,
     })
     return {
-        ...query, // 2️⃣​
+        ...query,
         errorMessage: query.error instanceof Error ? query.error.message : null
     }
 }

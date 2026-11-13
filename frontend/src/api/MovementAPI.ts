@@ -1,6 +1,19 @@
 import api from "@/lib/axios"
-import { movementListSchema, movementSchema, tagSchema, type CreateMovementDto, type Movement, type MovementList, type Tag } from "@/types"
+import {
+    movementPageSchema,
+    movementSchema,
+    tagSchema,
+    type CreateMovementDto,
+    type Movement,
+    type MovementPage,
+    type Tag,
+} from "@/types"
 import { handleApiError } from "./handleApiErrors"
+
+export interface GetMovementsParams {
+    page: number
+    limit: number
+}
 
 export const MovementAPI = {
     createMovement: async (dtoData: CreateMovementDto) => {
@@ -12,14 +25,16 @@ export const MovementAPI = {
         }
     },
     /** 
-     * obtener la colección completa de movimientos desde el backend
+     * obtener una página de movimientos desde el backend
      * validando las respuestas con Zod para asegurar la integridad de los datos en el frontend
     */
-    getMovements: async (): Promise<MovementList> => {
+    getMovements: async ({ page, limit }: GetMovementsParams): Promise<MovementPage> => {
         try {
-            const { data } = await api.get("/movements")
+            const { data } = await api.get("/movements", {
+                params: { page, limit },
+            })
             //validamos la estructura exacta que viene del backend
-            const response = movementListSchema.safeParse(data)
+            const response = movementPageSchema.safeParse(data)
             if (!response.success) {
                 if (import.meta.env.DEV) {
                     console.error('⚠️ [Zod Validation Error]:', response.error.format())
@@ -30,7 +45,7 @@ export const MovementAPI = {
             return response.data
         } catch (error) {
             // Pasamos el error y el contexto explícito para tus logs del modo dev
-            handleApiError(error, "MovementAPI.getMovements")
+            handleApiError(error, "MovementAPI.getMovements", { page, limit })
         }
     },
     getMovementById: async (id: Movement['id']): Promise<Movement> => {
