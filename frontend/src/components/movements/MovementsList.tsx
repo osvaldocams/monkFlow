@@ -3,11 +3,16 @@ import { formatCurrency } from "@/helpers/formatCurrency"
 import { formatDate } from "@/helpers/formatDate"
 import type { Movement, MovementType } from "@/types"
 import { Link } from "react-router-dom"
-import { Calendar, Eye, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, ArrowDownToLine, ArrowUpFromLine } from "lucide-react"
+import { Calendar, Eye, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, ArrowDownToLine, ArrowUpFromLine, Loader2 } from "lucide-react"
 
 
 interface MovementsListProps {
     movements: Movement[]
+    total: number
+    hasNextPage: boolean
+    isFetchingNextPage: boolean
+    isFetchNextPageError: boolean
+    onLoadMore: () => void
 }
 
 
@@ -19,7 +24,14 @@ const TYPE_ICONS: Record<MovementType, React.ReactNode> = {
     WITHDRAWAL: <ArrowUpFromLine className="w-3.5 h-3.5" />,
 }
 
-export default function MovementsList({ movements }: MovementsListProps) {
+export default function MovementsList({
+    movements,
+    total,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    onLoadMore,
+}: MovementsListProps) {
     return (
         <div className="bg-white rounded-lg shadow-md border border-linen-light">
 
@@ -189,10 +201,37 @@ export default function MovementsList({ movements }: MovementsListProps) {
             </div>
 
             {/* FOOTER */}
-            <div className="p-4 border-t border-gray-200 text-center">
-                <button className="text-sm text-green-balance font-medium transition-colors hover:opacity-75">
-                    Ver historial completo →
-                </button>
+            <div className="flex flex-col items-center gap-2 border-t border-linen-light px-5 py-6">
+                {hasNextPage ? (
+                    <button
+                        type="button"
+                        onClick={onLoadMore}
+                        disabled={isFetchingNextPage}
+                        aria-busy={isFetchingNextPage}
+                        className="inline-flex items-center gap-2 rounded-full border border-linen-light bg-white px-5 py-2 text-sm font-medium text-clay-gray transition-colors hover:border-sage hover:text-green-balance focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage disabled:cursor-wait disabled:opacity-60"
+                    >
+                        {isFetchingNextPage ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Cargando...
+                            </>
+                        ) : isFetchNextPageError ? (
+                            'Reintentar'
+                        ) : (
+                            'Cargar más'
+                        )}
+                    </button>
+                ) : (
+                    movements.length > 0 && (
+                        <p className="text-xs tracking-wide text-clay-gray" aria-live="polite">
+                            Has llegado al final del historial
+                        </p>
+                    )
+                )}
+
+                <p className="text-[11px] text-clay-gray">
+                    Mostrando {movements.length} de {total}
+                </p>
             </div>
         </div>
     )
