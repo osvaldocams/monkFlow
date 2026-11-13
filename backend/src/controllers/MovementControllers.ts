@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import prisma from '../config/db.js'
 import { MovementType } from '@prisma/client'
+import type { GetMovementsQuery } from '../schemas/movementSchemas.js'
 
 interface CreateMovementInput {
     type: MovementType
@@ -102,39 +103,61 @@ export class MovementController {
     }
     static getAllMovements = async (req: Request, res: Response) => {
         try {
-            const movements = await prisma.movement.findMany({
-                include: {
-                    incomeAccount: {
-                        select: {
-                            id: true,
-                            name: true,
-                            kind: true
+            const { page, limit } = res.locals.validatedQuery as GetMovementsQuery
+            const skip = (page - 1) * limit
+
+            const [movements, total] = await prisma.$transaction([
+                prisma.movement.findMany({
+                    include: {
+                        incomeAccount: {
+                            select: {
+                                id: true,
+                                name: true,
+                                kind: true
+                            }
+                        },
+                        expenseAccount: {
+                            select: {
+                                id: true,
+                                name: true,
+                                kind: true
+                            }
+                        },
+                        tags: {
+                            select: {
+                                id: true,
+                                name: true,
+                                slug: true,
+                                color: true
+                            }
                         }
                     },
-                    expenseAccount: {
-                        select: {
-                            id: true,
-                            name: true,
-                            kind: true
-                        }
-                    },
-                    tags: {
-                        select: {
-                            id: true,
-                            name: true,
-                            slug: true,
-                            color: true
-                        }
-                    }
-                },
-                orderBy: {
-                    date: 'desc'
+                    orderBy: [
+                        { date: 'desc' },
+                        { createdAt: 'desc' }
+                    ],
+                    skip,
+                    take: limit
+                }),
+                prisma.movement.count()
+            ])
+
+            const totalPages = total === 0 ? 0 : Math.ceil(total / limit)
+            const hasMore = page < totalPages
+
+            return res.status(200).json({
+                data: movements,
+                meta: {
+                    total,
+                    page,
+                    limit,
+                    totalPages,
+                    hasMore
                 }
             })
-            res.status(200).json(movements)
         } catch (error) {
             console.error(error)
-            res.status(500).json({
+            return res.status(500).json({
                 errors: [{ msg: 'Error fetching movements' }]
             })
         }
